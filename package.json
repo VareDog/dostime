@@ -1,0 +1,7 @@
+{
+  "name": "dostime",
+  "private": true,
+  "scripts": {
+    "deploy": "wrangler pages deploy"
+  }
+}

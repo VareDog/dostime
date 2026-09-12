@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>写日记 · Dostime</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="logo" href="/">Dostime</a>
+      <nav>
+        <a href="/">日记</a>
+        <a href="#" id="logout-link" class="hidden">退出登录</a>
+      </nav>
+    </div>
+  </header>
+  <main class="wrap narrow">
+    <div id="login-box" class="card">
+      <h2>管理员登录</h2>
+      <input type="password" id="password" placeholder="请输入管理密码" autocomplete="current-password" />
+      <p id="login-err" class="err"></p>
+      <button id="login-btn" class="primary">登录</button>
+    </div>
+
+    <div id="editor-box" class="hidden">
+      <h2>写新日记</h2>
+      <input type="text" id="title" placeholder="标题（必填）" maxlength="100" />
+      <textarea id="content" rows="12" placeholder="今天想写点什么…（必填）"></textarea>
+      <div class="upload-row">
+        <label class="upload-btn">+ 添加图片
+          <input type="file" id="file" accept="image/jpeg,image/png,image/gif,image/webp,image/avif" multiple hidden />
+        </label>
+        <span id="upload-status"></span>
+      </div>
+      <div id="thumbs" class="thumbs"></div>
+      <button id="publish-btn" class="primary">发 表</button>
+      <p id="pub-msg" class="err"></p>
+
+      <h3>已发表的日记</h3>
+      <div id="manage-list"><div class="loading">加载中…</div></div>
+    </div>
+  </main>
+  <footer class="wrap site-footer">© 2026 Dostime · dostime.pages.dev</footer>
+  <script src="/admin.js"></script>
+</body>
+</html>
