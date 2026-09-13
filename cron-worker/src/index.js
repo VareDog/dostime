@@ -2,9 +2,9 @@ import { EmailMessage } from 'cloudflare:email'
 import { createMimeMessage } from 'mimetext'
 
 const BJ_OFFSET_MS = 8 * 3600 * 1000
-const SITE = 'https://dostime.pages.dev'
+const SITE = 'https://dosday.dpdns.org'
 const MAIL_FROM = 'noreply@dosday.dpdns.org'
-const FROM_NAME = 'Dostime'
+const FROM_NAME = 'DosDay'
 
 function bjParts(from = new Date()) {
   const bj = new Date(from.getTime() + BJ_OFFSET_MS)
@@ -74,7 +74,7 @@ function escapeHtml(s) {
 function wrapHtml(inner) {
   return `<div style="font-family:-apple-system,'Segoe UI',sans-serif;max-width:640px;margin:0 auto;color:#333">${inner}
     <hr style="border:none;border-top:1px solid #eee;margin:24px 0 12px"/>
-    <p style="color:#aaa;font-size:12px">本邮件由 dostime.pages.dev 自动发送</p>
+    <p style="color:#aaa;font-size:12px">本邮件由 dosday.dpdns.org 自动发送</p>
   </div>`
 }
 
@@ -94,7 +94,7 @@ async function sendViaResend(env, subject, html) {
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from: 'Dostime <onboarding@resend.dev>', to: [env.NOTIFY_EMAIL], subject, html })
+    body: JSON.stringify({ from: 'DosDay <onboarding@resend.dev>', to: [env.NOTIFY_EMAIL], subject, html })
   })
   return res.ok ? 'resend' : false
 }
@@ -117,7 +117,7 @@ async function processScheduledEmails(env) {
   let sent = 0
   const errors = []
   for (const job of results) {
-    const subject = job.title ? `【dostime】定时邮件：${job.title}` : '【dostime】定时邮件'
+    const subject = job.title ? `【DosDay】定时邮件：${job.title}` : '【DosDay】定时邮件'
     const html = wrapHtml(`
       <h2 style="margin-bottom:4px">${escapeHtml(job.title || '定时邮件')}</h2>
       <p style="color:#999;font-size:13px;margin-top:0">${bjTodayStr()}</p>
@@ -146,7 +146,7 @@ async function processTasks(env) {
   for (const task of results) {
     const overdue = task.due_date < today
     const kind = overdue ? '任务已过期' : '今日到期任务'
-    const subject = `【dostime】${kind}：${task.title}`
+    const subject = `【DosDay】${kind}：${task.title}`
     const rec = { once: '单次', daily: '每天', weekly: '每周', monthly: '每月', yearly: '每年' }[task.recurrence] || task.recurrence
     const html = wrapHtml(`
       <h2 style="margin-bottom:4px">${escapeHtml(task.title)}</h2>
@@ -173,9 +173,9 @@ async function sendDiaryNotify(env, body) {
   const content = String(body.content || '')
   const images = Array.isArray(body.images) ? body.images.slice(0, 20) : []
   const createdAt = String(body.createdAt || bjTodayStr())
-  const subject = `【dostime】新日记：${title || content.slice(0, 20)}`
+  const subject = `【DosDay】新日记：${title || content.slice(0, 20)}`
   const imgHtml = images
-    .map(u => `<p style="margin:16px 0"><img src="https://dostime.pages.dev${escapeHtml(u)}" style="max-width:100%;border-radius:8px" alt="" /></p>`)
+    .map(u => `<p style="margin:16px 0"><img src="${SITE}${escapeHtml(u)}" style="max-width:100%;border-radius:8px" alt="" /></p>`)
     .join('')
   const html = wrapHtml(`
     ${title ? `<h2 style="margin-bottom:4px">${escapeHtml(title)}</h2>` : ''}
@@ -211,7 +211,7 @@ export default {
       if (!env.CRON_SECRET || url.searchParams.get('key') !== env.CRON_SECRET) {
         return new Response('unauthorized', { status: 401 })
       }
-      const subject = '【dostime】邮件通道测试'
+      const subject = '【DosDay】邮件通道测试'
       const html = wrapHtml(`
         <h2 style="margin-bottom:4px">邮件通道测试</h2>
         <p style="color:#999;font-size:13px;margin-top:0">${bjTodayStr()}</p>
