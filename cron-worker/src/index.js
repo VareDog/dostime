@@ -78,32 +78,84 @@ function wrapHtml(inner) {
   </div>`
 }
 
-async function sendViaCF(env, subject, html) {
+async function sendViaCF(env, subject, html, attachments = []) {
   const msg = createMimeMessage()
   msg.setSender({ name: FROM_NAME, addr: MAIL_FROM })
   msg.setRecipient(env.NOTIFY_EMAIL)
   msg.setSubject(subject)
   msg.addMessage({ contentType: 'text/html', data: html })
+  for (const a of attachments) {
+    msg.addAttachment({
+      filename: a.filename,
+      contentType: a.contentType,
+      data: a.data,
+      inline: true,
+      headers: { 'Content-ID': a.cid }
+    })
+  }
   const message = new EmailMessage(MAIL_FROM, env.NOTIFY_EMAIL, msg.asRaw())
   await env.SEND_EMAIL.send(message)
   return 'cf'
 }
 
-async function sendViaResend(env, subject, html) {
+async function sendViaResend(env, subject, html, attachments = []) {
   if (!env.RESEND_API_KEY) return false
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from: 'DosDay <onboarding@resend.dev>', to: [env.NOTIFY_EMAIL], subject, html })
+    body: JSON.stringify({
+      from: 'DosDay <onboarding@resend.dev>',
+      to: [env.NOTIFY_EMAIL],
+      subject,
+      html,
+      attachments: attachments.map(a => ({
+        filename: a.filename,
+        content: a.data,
+        content_id: a.cid,
+        disposition: 'inline'
+      }))
+    })
   })
   return res.ok ? 'resend' : false
 }
 
-async function sendWithFallback(env, subject, html) {
+function toBase64(buffer) {
+  const bytes = new Uint8Array(buffer)
+  const chunk = 0x8000
+  let bin = ''
+  for (let i = 0; i < bytes.length; i += chunk) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk))
+  }
+  return btoa(bin)
+}
+
+async function fetchImageAttachments(images) {
+  const attachments = []
+  const fallbackUrls = []
+  for (let i = 0; i < images.length; i++) {
+    const u = String(images[i])
+    try {
+      const full = u.startsWith('http') ? u : SITE + u
+      const res = await fetch(full, { signal: AbortSignal.timeout(10000) })
+      if (!res.ok) throw new Error('HTTP ' + res.status)
+      const buf = await res.arrayBuffer()
+      if (buf.byteLength > 4 * 1024 * 1024) throw new Error('too large')
+      const ext = (u.match(/\.([a-z0-9]+)$/i) || [null, 'png'])[1].toLowerCase()
+      const type = ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : ext === 'gif' ? 'image/gif' : ext === 'webp' ? 'image/webp' : 'image/png'
+      const cid = 'img' + i
+      attachments.push({ cid, filename: cid + '.' + ext, contentType: type, data: toBase64(buf) })
+    } catch (e) {
+      fallbackUrls.push(u)
+    }
+  }
+  return { attachments, fallbackUrls }
+}
+
+async function sendWithFallback(env, subject, html, attachments = []) {
   try {
-    return await sendViaCF(env, subject, html)
+    return await sendViaCF(env, subject, html, attachments)
   } catch (e) {
-    return await sendViaResend(env, subject, html)
+    return await sendViaResend(env, subject, html, attachments)
   }
 }
 
@@ -174,15 +226,19 @@ async function sendDiaryNotify(env, body) {
   const images = Array.isArray(body.images) ? body.images.slice(0, 20) : []
   const createdAt = String(body.createdAt || bjTodayStr())
   const subject = `【DosDay】新日记：${title || content.slice(0, 20)}`
-  const imgHtml = images
-    .map(u => `<p style="margin:16px 0"><img src="${SITE}${escapeHtml(u)}" style="max-width:100%;border-radius:8px" alt="" /></p>`)
+  const { attachments, fallbackUrls } = await fetchImageAttachments(images)
+  const inlineHtml = attachments
+    .map(a => `<p style="margin:16px 0"><img src="cid:${a.cid}" style="max-width:100%;border-radius:8px" alt="" /></p>`)
+    .join('')
+  const fallbackHtml = fallbackUrls
+    .map(u => `<p style="margin:16px 0"><img src="${(u.startsWith('http') ? u : SITE + u).replace(/"/g, '%22')}" style="max-width:100%;border-radius:8px" alt="" /></p>`)
     .join('')
   const html = wrapHtml(`
     ${title ? `<h2 style="margin-bottom:4px">${escapeHtml(title)}</h2>` : ''}
     <p style="color:#999;font-size:13px;margin-top:0">${escapeHtml(createdAt)}</p>
     <div style="font-size:15px;line-height:1.9;white-space:normal">${escapeHtml(content).replace(/\n/g, '<br/>')}</div>
-    ${imgHtml}`)
-  const via = await sendWithFallback(env, subject, html)
+    ${inlineHtml}${fallbackHtml}`)
+  const via = await sendWithFallback(env, subject, html, attachments)
   return { ok: Boolean(via), via: via || 'none' }
 }
 
