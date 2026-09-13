@@ -11,7 +11,8 @@ This file records user instructions, preferences, and teachings for reference in
 - Instructions:
   - 用户在 Cloudflare 有旧站点 dosday.pages.dev（用户提及的地址，未经本人确认），另有 R2 桶 dosfox-dpdns-org、email、mail2、microfeed 等资源，操作时不得触碰这些既有资源
   - 主站点：dostime.pages.dev（Cloudflare Pages 经典版项目），管理后台 /admin.html，管理密码已交付用户（如遗忘可通过 wrangler pages secret put ADMIN_PASSWORD 重置）
-  - 架构：Pages + Functions，D1 数据库 dostime-db（id: 8ede6c54-b380-4f39-a920-5e284cb7b522，posts 表），R2 桶 dostime-images（图片经 /api/images/[key] 函数代理访问），邮件通知走 Resend（免费版发件人 onboarding@resend.dev，只能发给注册邮箱 yarnshow@qq.com）
+  - 架构：Pages + Functions，D1 数据库 dostime-db（id: 8ede6c54-b380-4f39-a920-5e284cb7b522，posts/scheduled_emails/tasks 三表），R2 桶 dostime-images（图片经 /api/images/[key] 函数代理访问），邮件通知走 Resend（免费版发件人 onboarding@resend.dev，只能发给注册邮箱 yarnshow@qq.com）
+  - 定时引擎：独立 Worker dostime-cron（cron-worker/ 目录，wrangler deploy 部署，workers.dev 域名 dostime-cron.doswowo.workers.dev），cron 每 5 分钟扫描 scheduled_emails 到期项与 tasks 过期项发邮件；secrets 为 RESEND_API_KEY/NOTIFY_EMAIL/CRON_SECRET；手动触发 GET /run 带 X-Cron-Key 头（密钥存 /tmp/opencode/cron_secret.txt，会话级临时）
   - 部署方式：wrangler pages deploy（工作目录 /workspace，配置在 wrangler.toml）；wrangler 4.x 首次创建经典 Pages 项目必须加 --force 绕过对 Workers 的 delegation，项目已存在后无需 --force
   - 部署分支必须是 main（项目 production-branch 为 main）
   - Secrets：ADMIN_PASSWORD、RESEND_API_KEY、NOTIFY_EMAIL（均为 Pages secret，不进代码库）

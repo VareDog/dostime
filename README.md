@@ -11,10 +11,31 @@
 | 组件 | 服务 | 用途 |
 |------|------|------|
 | 前端页面 | Cloudflare Pages | 日记列表 / 详情 / 管理后台 |
-| 后端接口 | Pages Functions（`functions/` 目录） | 日记增删改查、图片上传、登录认证 |
-| 数据库 | D1 `dostime-db`（posts 表） | 存日记标题、正文、图片列表 |
+| 后端接口 | Pages Functions（`functions/` 目录） | 日记增删改查、图片上传、登录认证、定时邮件与任务管理 |
+| 数据库 | D1 `dostime-db` | posts（日记）、scheduled_emails（定时邮件）、tasks（任务） |
 | 图片存储 | R2 `dostime-images` | 存上传的图片，经 `/api/images/[key]` 访问 |
-| 邮件通知 | Resend 免费版 | 每次发表日记后，图文发送到收件邮箱 |
+| 邮件通知 | Resend 免费版 | 日记通知、定时邮件、任务提醒 |
+| 定时引擎 | Worker `dostime-cron` | 每 5 分钟检查到期定时邮件和过期任务并自动发邮件 |
+
+## 三大功能
+
+1. **日记**：标题可不填，只写内容即可；支持图片；发表后完整图文自动发到你的邮箱
+2. **定时邮件**（后台"定时邮件"页签）：预设邮件内容，按 每天 / 每周（选周几）/ 每月（选几号）/ 每年（选月日）+ 指定时刻（北京时间）自动发送；可随时停用 / 启用 / 删除
+3. **任务提醒**（后台"任务提醒"页签）：任务设截止日期和周期（单次 / 每天 / 每周 / 每月 / 每年）；到期日和过期后**每天发邮件提醒**，直到你点完成；周期任务点"完成本期"后自动顺延到下一期
+
+## 定时引擎说明
+
+`cron-worker/` 是独立部署的 Cloudflare Worker（dostime-cron），cron 触发器每 5 分钟运行一次：
+
+- 扫描 `scheduled_emails` 中到期的任务 → 发送邮件 → 推进下次发送时间
+- 扫描 `tasks` 中过期未完成的任务 → 发送提醒 → 当天去重（一天最多一封）
+
+手动触发测试（需 CRON_SECRET）：
+
+```bash
+curl -H "X-Cron-Key: 你的CRON_SECRET" https://dostime-cron.doswowo.workers.dev/run
+```
+
 
 ## 密钥与配置（Cloudflare Dashboard 中管理）
 
