@@ -2,6 +2,12 @@ import { requireAuth, json } from '../../_lib/auth.js'
 
 const NOTIFY_URL = 'https://dostime-cron.doswowo.workers.dev/notify'
 
+function autoTitle(title, content) {
+  const t = (title || '').trim()
+  if (t) return t.slice(0, 100)
+  return Array.from(content.trim().replace(/\s+/g, ' ')).slice(0, 12).join('') || '无题'
+}
+
 async function sendEmail(env, { title, content, images, createdAt }) {
   if (!env.CRON_SECRET) return { sent: false, reason: '通知密钥未配置' }
   try {
@@ -29,7 +35,7 @@ export async function onRequestGet({ env }) {
 export async function onRequestPost({ request, env }) {
   if (!(await requireAuth(request, env))) return json({ error: '未登录' }, 401)
   const body = await request.json().catch(() => ({}))
-  const title = (body.title || '').trim().slice(0, 100)
+  const title = autoTitle(body.title, body.content || '')
   const content = (body.content || '').trim()
   const images = Array.isArray(body.images) ? body.images.slice(0, 20) : []
   const pinned = body.pinned ? 1 : 0

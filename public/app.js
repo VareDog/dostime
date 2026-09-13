@@ -95,7 +95,7 @@ function bindCommentForm(postId) {
     const name = $('#c-name').value.trim()
     const phone = $('#c-phone').value.trim()
     const content = $('#c-content').value.trim()
-    if (!name || !content) return
+    if (!name || !phone || !content) return
     status.textContent = '提交中…'
     try {
       const res = await fetch(`/api/posts/${postId}/comments`, {

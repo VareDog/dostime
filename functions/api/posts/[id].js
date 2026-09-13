@@ -1,5 +1,11 @@
 import { requireAuth, json } from '../../_lib/auth.js'
 
+function autoTitle(title, content) {
+  const t = (title || '').trim()
+  if (t) return t.slice(0, 100)
+  return Array.from(content.trim().replace(/\s+/g, ' ')).slice(0, 12).join('') || '无题'
+}
+
 export async function onRequestGet({ params, env }) {
   const post = await env.DB
     .prepare('SELECT id, title, content, images, pinned, created_at, updated_at FROM posts WHERE id = ?')
@@ -13,7 +19,7 @@ export async function onRequestGet({ params, env }) {
 export async function onRequestPut({ request, params, env }) {
   if (!(await requireAuth(request, env))) return json({ error: '未登录' }, 401)
   const body = await request.json().catch(() => ({}))
-  const title = (body.title || '').trim().slice(0, 100)
+  const title = autoTitle(body.title, body.content || '')
   const content = (body.content || '').trim()
   const images = Array.isArray(body.images) ? body.images.slice(0, 20) : []
   const pinned = body.pinned ? 1 : 0
