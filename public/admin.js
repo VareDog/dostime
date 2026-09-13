@@ -465,4 +465,5 @@ $('#logout-link').addEventListener('click', async e => {
   location.reload()
 })
 
+resetTaskForm()
 whoami()
