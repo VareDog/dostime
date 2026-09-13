@@ -62,3 +62,13 @@ This file records user instructions, preferences, and teachings for reference in
   - 时间换算教训：北京时间=UTC+8，date -u 显示的是 UTC，设计"几分钟后"测试时段时先加 8 小时；D1 datetime('now','localtime') 存的是 UTC
   - /tmp/opencode/gh.env 的 GH_PAT 值尾部带 \"，提取后需 tr -d '"\\' 再用
   - GitHub 已推送 b2beb41；Git 自动部署开启（push 即上线），手动部署与自动部署并存
+
+[Project Knowledge Summary]
+- Date: 2026-09-14
+- Context: 任务完成日期模型 + 定时邮件双周期上线时发现
+- Category: Operations & Deployment
+- Instructions:
+  - tasks 表字段：complete_date 可编辑（用户完成时更新），next_date 服务端自动算（=complete_date+cycle_days，不收外部输入），remind_time_1 必填/remind_time_2 选填（留空=每天一次）
+  - scheduled_emails 双周期：新增 frequency2/weekday2/monthday2/month2/send_time2/next_send_at2 列，周期2 选填、独立计时独立顺延；worker processScheduledEmails 两组分别判断发送；前端 scSyncFields 同步两组显隐、sc-time2 无周期2时 disabled
+  - 全站时间已统一北京时间：D1 四表 created_at 默认值 datetime('now','+8 hours')；API INSERT 显式传 bjNowStr()；scheduled_emails 的 next_send_at(2) 保持 UTC ISO 供调度对比，前端展示用 toLocaleString Asia/Shanghai 转 BJ
+  - 用户偏好：表单预览直接显示结果（如「下次任务时间：2026-10-12 08:00 / 20:00」），不要显示公式说明文字
