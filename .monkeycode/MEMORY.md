@@ -49,3 +49,16 @@ This file records user instructions, preferences, and teachings for reference in
   - dosday.dpdns.org zone 的 Email Routing（MX/DKIM/SPF）独立于 Pages 项目，删项目不受影响；zone 内 CNAME dosday.dpdns.org→dosday.pages.dev 与 MX 共存正常
   - 沙箱可访问 dosday.dpdns.org（第三方域名，未被出网白名单挡），验证站点可直接 curl 该域；*.pages.dev/*.workers.dev 仍被挡
   - Pages secrets（新项目 dosday 已配齐）：ADMIN_PASSWORD、NOTIFY_EMAIL、RESEND_API_KEY、CRON_SECRET
+
+[Project Knowledge Summary]
+- Date: 2026-09-14
+- Context: 任务提醒功能重做上线验证时发现
+- Category: Operations & Deployment
+- Instructions:
+  - tasks 表新模型：title + cycle_days(1-3650) + next_date（监测日，到达或超期每天发）+ remind_time_1/2（每天两时段，各发一封）+ enabled + last_slot1/2_date（当天去重标记）；完成本期=complete_date 今天、next_date=今天+cycle_days、清空 last_slot
+  - 部署 token：旧 cfut_ token 已失效（Authorization header 格式错误），新建 token 存 /tmp/opencode/deploy_token.env（Workers Scripts/D1/Pages Routes/Memberships/User Details 权限，2027-09-13 到期）；wrangler 非交互必须用 CLOUDFLARE_API_TOKEN，Global Key 只能走 curl REST
+  - wrangler pages deploy 必须显式加 --project-name dosday --branch main --commit-dirty=true，否则非交互环境下报错或进项目选择
+  - Worker /run 除 X-Cron-Key 头外也支持 ?key= query 参数；Pages 新增登录保护代理 GET /api/cron-run（fetch worker /run 透传结果），沙箱调它即可观察 cron 逻辑返回（emails/tasks 计数）
+  - 时间换算教训：北京时间=UTC+8，date -u 显示的是 UTC，设计"几分钟后"测试时段时先加 8 小时；D1 datetime('now','localtime') 存的是 UTC
+  - /tmp/opencode/gh.env 的 GH_PAT 值尾部带 \"，提取后需 tr -d '"\\' 再用
+  - GitHub 已推送 b2beb41；Git 自动部署开启（push 即上线），手动部署与自动部署并存

@@ -267,16 +267,31 @@ async function createSchedule() {
 
 let editingTaskId = null
 
+function bjTodayLocal() {
+  return new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10)
+}
+
+function addDaysLocal(dateStr, days) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr || '')) return ''
+  return new Date(Date.parse(dateStr + 'T00:00:00Z') + days * 86400000).toISOString().slice(0, 10)
+}
+
+function updateNextPreview() {
+  const next = addDaysLocal($('#tk-complete').value, Number($('#tk-cycle').value))
+  $('#tk-next-preview').textContent = next || '—'
+}
+
 function resetTaskForm() {
   editingTaskId = null
   $('#tk-title').value = ''
   $('#tk-cycle').value = 28
-  $('#tk-next').value = ''
+  $('#tk-complete').value = bjTodayLocal()
   $('#tk-t1').value = '08:00'
   $('#tk-t2').value = '20:00'
   $('#tk-form-title').textContent = '新建任务'
   $('#tk-create-btn').textContent = '创建任务'
   $('#tk-cancel-btn').classList.add('hidden')
+  updateNextPreview()
 }
 
 async function loadTasks() {
@@ -298,7 +313,7 @@ async function loadTasks() {
         return `<div class="manage-item ${t.enabled ? '' : 'item-done'}">
           <div>
             <div>${t.title.replace(/</g, '&lt;')} ${badge}</div>
-            <div class="d">每 ${t.cycle_days} 天 · 下次 ${t.next_date} · 时段1 ${t.remind_time_1}${t.remind_time_2 ? ` · 时段2 ${t.remind_time_2}` : ''} · 今天 ${today}</div>
+            <div class="d">每 ${t.cycle_days} 天 · 完成 ${t.complete_date || '—'} · 下次 ${t.next_date} · 提醒 ${t.remind_time_1}${t.remind_time_2 ? ` / ${t.remind_time_2}` : ''}</div>
           </div>
           <div class="acts">
             <button class="tk-done" data-id="${t.id}">完成本期</button>
@@ -319,7 +334,7 @@ async function loadTasks() {
         const data = await res.json()
         if (res.ok && data.rolled) {
           $('#tk-msg').className = 'ok-msg'
-          $('#tk-msg').textContent = `已完成本期（${data.complete_date}），下次日期顺延至：${data.next_date}`
+          $('#tk-msg').textContent = `完成日期已记为 ${data.complete_date}，下次日期顺延至：${data.next_date}`
         }
         loadTasks()
       })
@@ -330,7 +345,7 @@ async function loadTasks() {
         editingTaskId = t.id
         $('#tk-title').value = t.title
         $('#tk-cycle').value = t.cycle_days
-        $('#tk-next').value = t.next_date
+        $('#tk-complete').value = t.complete_date || bjTodayLocal()
         $('#tk-t1').value = t.remind_time_1
         $('#tk-t2').value = t.remind_time_2 || ''
         $('#tk-form-title').textContent = '编辑任务'
@@ -368,12 +383,12 @@ async function createTask() {
   const payload = {
     title: $('#tk-title').value.trim(),
     cycle_days: Number($('#tk-cycle').value),
-    next_date: $('#tk-next').value,
+    complete_date: $('#tk-complete').value,
     remind_time_1: $('#tk-t1').value,
     remind_time_2: $('#tk-t2').value
   }
   if (!payload.title) return (msg.textContent = '任务内容不能为空')
-  if (!payload.next_date) return (msg.textContent = '请选择下次日期')
+  if (!payload.complete_date) return (msg.textContent = '请选择完成日期')
   const res = await fetch(editingTaskId ? `/api/tasks/${editingTaskId}` : '/api/tasks', {
     method: editingTaskId ? 'PUT' : 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -382,7 +397,7 @@ async function createTask() {
   const data = await res.json()
   if (res.ok) {
     msg.className = 'ok-msg'
-    msg.textContent = editingTaskId ? '任务已更新' : '任务创建成功：到达下次日期后，每天将在提醒时段发送邮件'
+    msg.textContent = editingTaskId ? `任务已更新，下次日期：${data.next_date}` : `任务创建成功（下次日期 ${data.next_date || '自动生成'}），到达或超过下次日期后每天按提醒时段发邮件`
     resetTaskForm()
     loadTasks()
   } else {
@@ -406,6 +421,8 @@ $('#file').addEventListener('change', e => e.target.files.length && uploadFiles(
 $('#publish-btn').addEventListener('click', publish)
 $('#sc-create-btn').addEventListener('click', createSchedule)
 $('#tk-create-btn').addEventListener('click', createTask)
+$('#tk-cycle').addEventListener('input', updateNextPreview)
+$('#tk-complete').addEventListener('change', updateNextPreview)
 $('#tk-cancel-btn').addEventListener('click', () => {
   resetTaskForm()
   $('#tk-msg').textContent = ''

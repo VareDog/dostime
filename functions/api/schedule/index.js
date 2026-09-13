@@ -1,5 +1,5 @@
 import { requireAuth, json } from '../../_lib/auth.js'
-import { initialNextSendAt, validateSchedule, describeSchedule } from '../../_lib/schedule.js'
+import { initialNextSendAt, validateSchedule, describeSchedule, bjNowStr } from '../../_lib/schedule.js'
 
 function shape(body) {
   const freq = body.frequency
@@ -28,8 +28,8 @@ export async function onRequestPost({ request, env }) {
   const job = shape(body)
   const next = initialNextSendAt(job)
   const r = await env.DB
-    .prepare('INSERT INTO scheduled_emails (title, content, frequency, weekday, monthday, month, send_time, enabled, next_send_at) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)')
-    .bind(job.title, job.content, job.frequency, job.weekday, job.monthday, job.month, job.send_time, next)
+    .prepare('INSERT INTO scheduled_emails (title, content, frequency, weekday, monthday, month, send_time, enabled, next_send_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)')
+    .bind(job.title, job.content, job.frequency, job.weekday, job.monthday, job.month, job.send_time, next, bjNowStr())
     .run()
   return json({ ok: true, id: r.meta.last_row_id, next_send_at: next })
 }

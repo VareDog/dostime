@@ -82,6 +82,14 @@ export function bjTodayStr(from = new Date()) {
   return bj.toISOString().slice(0, 10)
 }
 
+export function bjNowStr(from = new Date()) {
+  return new Date(from.getTime() + BJ_OFFSET_MS).toISOString().slice(0, 19).replace('T', ' ')
+}
+
+export function bjAddDays(dateStr, days) {
+  return new Date(Date.parse(dateStr + 'T00:00:00Z') + days * 86400000).toISOString().slice(0, 10)
+}
+
 export function validateSchedule(body) {
   const freq = body.frequency
   const sendTime = String(body.send_time || '')

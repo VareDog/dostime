@@ -1,3 +1,22 @@
+CREATE TABLE IF NOT EXISTS posts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL DEFAULT '',
+  content TEXT NOT NULL,
+  images TEXT NOT NULL DEFAULT '[]',
+  pinned INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now', '+8 hours')),
+  updated_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS comments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  post_id INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  phone TEXT NOT NULL DEFAULT '',
+  content TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now', '+8 hours'))
+);
+
 CREATE TABLE IF NOT EXISTS scheduled_emails (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   title TEXT NOT NULL DEFAULT '',
@@ -9,7 +28,7 @@ CREATE TABLE IF NOT EXISTS scheduled_emails (
   send_time TEXT NOT NULL,
   enabled INTEGER NOT NULL DEFAULT 1,
   next_send_at TEXT,
-  created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+  created_at TEXT NOT NULL DEFAULT (datetime('now', '+8 hours'))
 );
 
 CREATE TABLE IF NOT EXISTS tasks (
@@ -23,13 +42,7 @@ CREATE TABLE IF NOT EXISTS tasks (
   enabled INTEGER NOT NULL DEFAULT 1,
   last_slot1_date TEXT,
   last_slot2_date TEXT,
-  created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+  created_at TEXT NOT NULL DEFAULT (datetime('now', '+8 hours'))
 );
 
 CREATE INDEX IF NOT EXISTS comments_post_idx ON comments (post_id, id);
-
--- 2026-09-13: 置顶功能
-ALTER TABLE posts ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0;
-
--- 2026-09-13: 评论增加电话字段
-ALTER TABLE comments ADD COLUMN phone TEXT NOT NULL DEFAULT '';

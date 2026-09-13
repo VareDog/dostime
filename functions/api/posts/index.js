@@ -1,5 +1,6 @@
 import { requireAuth, json } from '../../_lib/auth.js'
 import { sendNotify } from '../../_lib/notify.js'
+import { bjNowStr } from '../../_lib/schedule.js'
 
 function autoTitle(title, content) {
   const t = (title || '').trim()
@@ -23,9 +24,10 @@ export async function onRequestPost({ request, env }) {
   const images = Array.isArray(body.images) ? body.images.slice(0, 20) : []
   const pinned = body.pinned ? 1 : 0
   if (!content) return json({ error: '内容不能为空' }, 400)
+  const createdAt = bjNowStr()
   const r = await env.DB
-    .prepare('INSERT INTO posts (title, content, images, pinned) VALUES (?, ?, ?, ?)')
-    .bind(title, content, JSON.stringify(images), pinned)
+    .prepare('INSERT INTO posts (title, content, images, pinned, created_at) VALUES (?, ?, ?, ?, ?)')
+    .bind(title, content, JSON.stringify(images), pinned, createdAt)
     .run()
   let email = { sent: false, reason: '未知' }
   try {
@@ -33,7 +35,7 @@ export async function onRequestPost({ request, env }) {
       title,
       content,
       images,
-      createdAt: new Date().toISOString().replace('T', ' ').slice(0, 16) + ' UTC'
+      createdAt: createdAt.slice(0, 16)
     })
   } catch (e) {
     email = { sent: false, reason: String(e && e.message ? e.message : e).slice(0, 200) }

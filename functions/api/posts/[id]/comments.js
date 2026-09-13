@@ -1,4 +1,5 @@
 import { json } from '../../../_lib/auth.js'
+import { bjNowStr } from '../../../_lib/schedule.js'
 
 const NOTIFY_URL = 'https://dostime-cron.doswowo.workers.dev/notify'
 
@@ -30,8 +31,8 @@ export async function onRequestPost({ request, params, env, ctx }) {
   const post = await env.DB.prepare('SELECT id, title, content FROM posts WHERE id = ?').bind(postId).first()
   if (!post) return json({ error: '日记不存在' }, 404)
   const r = await env.DB
-    .prepare('INSERT INTO comments (post_id, name, phone, content) VALUES (?, ?, ?, ?)')
-    .bind(postId, name, phone, content)
+    .prepare('INSERT INTO comments (post_id, name, phone, content, created_at) VALUES (?, ?, ?, ?, ?)')
+    .bind(postId, name, phone, content, bjNowStr())
     .run()
   const row = await env.DB
     .prepare('SELECT id, name, phone, content, created_at FROM comments WHERE id = ?')

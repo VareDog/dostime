@@ -1,5 +1,6 @@
 import { requireAuth, json } from '../../_lib/auth.js'
 import { sendNotify } from '../../_lib/notify.js'
+import { bjNowStr } from '../../_lib/schedule.js'
 
 function autoTitle(title, content) {
   const t = (title || '').trim()
@@ -25,9 +26,10 @@ export async function onRequestPut({ request, params, env }) {
   const images = Array.isArray(body.images) ? body.images.slice(0, 20) : []
   const pinned = body.pinned ? 1 : 0
   if (!content) return json({ error: '内容不能为空' }, 400)
+  const updatedAt = bjNowStr()
   const r = await env.DB
-    .prepare("UPDATE posts SET title = ?, content = ?, images = ?, pinned = ?, updated_at = datetime('now', 'localtime') WHERE id = ?")
-    .bind(title, content, JSON.stringify(images), pinned, params.id)
+    .prepare('UPDATE posts SET title = ?, content = ?, images = ?, pinned = ?, updated_at = ? WHERE id = ?')
+    .bind(title, content, JSON.stringify(images), pinned, updatedAt, params.id)
     .run()
   if (!r.meta.changes) return json({ error: '未找到' }, 404)
   let email = { sent: false, reason: '未知' }
@@ -37,7 +39,7 @@ export async function onRequestPut({ request, params, env }) {
       title,
       content,
       images,
-      createdAt: new Date().toISOString().replace('T', ' ').slice(0, 16) + ' UTC'
+      createdAt: updatedAt.slice(0, 16)
     })
   } catch (e) {
     email = { sent: false, reason: String(e && e.message ? e.message : e).slice(0, 200) }

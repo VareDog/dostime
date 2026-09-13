@@ -1,5 +1,5 @@
 import { requireAuth, json } from '../../_lib/auth.js'
-import { bjTodayStr } from '../../_lib/schedule.js'
+import { bjTodayStr, bjAddDays, bjNowStr } from '../../_lib/schedule.js'
 
 function diffDays(fromDate, toDate) {
   return Math.round((Date.parse(toDate + 'T00:00:00Z') - Date.parse(fromDate + 'T00:00:00Z')) / 86400000)
@@ -11,31 +11,6 @@ function validDate(s) {
 
 function validTime(s) {
   return /^([01]\d|2[0-3]):[0-5]\d$/.test(s || '')
-}
-
-function parseBody(body, partial) {
-  const out = {}
-  if (!partial || body.title !== undefined) {
-    out.title = String(body.title || '').trim().slice(0, 100)
-    if (!out.title) return { error: '任务内容不能为空' }
-  }
-  if (!partial || body.cycle_days !== undefined) {
-    out.cycle_days = Number(body.cycle_days)
-    if (!Number.isInteger(out.cycle_days) || out.cycle_days < 1 || out.cycle_days > 3650) return { error: '周期天数应为 1-3650 的整数' }
-  }
-  if (!partial || body.next_date !== undefined) {
-    out.next_date = String(body.next_date || '').trim()
-    if (!validDate(out.next_date)) return { error: '下次日期格式应为 YYYY-MM-DD' }
-  }
-  if (!partial || body.remind_time_1 !== undefined) {
-    out.remind_time_1 = String(body.remind_time_1 || '').trim()
-    if (!validTime(out.remind_time_1)) return { error: '提醒时段1 格式应为 HH:MM' }
-  }
-  if (!partial || body.remind_time_2 !== undefined) {
-    out.remind_time_2 = String(body.remind_time_2 || '').trim()
-    if (out.remind_time_2 && !validTime(out.remind_time_2)) return { error: '提醒时段2 格式应为 HH:MM' }
-  }
-  return out
 }
 
 export async function onRequestGet({ env }) {
@@ -54,11 +29,20 @@ export async function onRequestGet({ env }) {
 export async function onRequestPost({ request, env }) {
   if (!(await requireAuth(request, env))) return json({ error: '未登录' }, 401)
   const body = await request.json().catch(() => ({}))
-  const p = parseBody(body, false)
-  if (p.error) return json({ error: p.error }, 400)
+  const title = String(body.title || '').trim().slice(0, 100)
+  const cycleDays = Number(body.cycle_days)
+  const completeDate = String(body.complete_date || '').trim()
+  const t1 = String(body.remind_time_1 || '').trim()
+  const t2 = String(body.remind_time_2 || '').trim()
+  if (!title) return json({ error: '任务内容不能为空' }, 400)
+  if (!Number.isInteger(cycleDays) || cycleDays < 1 || cycleDays > 3650) return json({ error: '周期天数应为 1-3650 的整数' }, 400)
+  if (!validDate(completeDate)) return json({ error: '完成日期格式应为 YYYY-MM-DD' }, 400)
+  if (!validTime(t1)) return json({ error: '提醒时段1 格式应为 HH:MM' }, 400)
+  if (t2 && !validTime(t2)) return json({ error: '提醒时段2 格式应为 HH:MM' }, 400)
+  const nextDate = bjAddDays(completeDate, cycleDays)
   const r = await env.DB
-    .prepare('INSERT INTO tasks (title, cycle_days, next_date, remind_time_1, remind_time_2) VALUES (?, ?, ?, ?, ?)')
-    .bind(p.title, p.cycle_days, p.next_date, p.remind_time_1, p.remind_time_2 || null)
+    .prepare('INSERT INTO tasks (title, cycle_days, complete_date, next_date, remind_time_1, remind_time_2, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    .bind(title, cycleDays, completeDate, nextDate, t1, t2 || null, bjNowStr())
     .run()
-  return json({ ok: true, id: r.meta.last_row_id })
+  return json({ ok: true, id: r.meta.last_row_id, next_date: nextDate })
 }
