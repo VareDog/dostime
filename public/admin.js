@@ -59,8 +59,8 @@ async function uploadFiles(files) {
       images.push(data.url)
       renderThumbs()
     } else {
-      status.textContent = data.error || '上传失败'
-      await new Promise(r => setTimeout(r, 1500))
+      status.textContent = res.status === 401 ? '登录已失效，请刷新页面重新登录' : (data.error || '上传失败')
+      await new Promise(r => setTimeout(r, 2500))
     }
   }
   status.textContent = images.length ? `已添加 ${images.length} 张图片` : ''

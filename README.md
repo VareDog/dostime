@@ -6,6 +6,19 @@
 - 管理后台：https://dosday.dpdns.org/admin.html
 - 代码仓库：https://github.com/VareDog/dostime
 
+## 更新记录
+
+### 2026-09-13
+
+- **站点迁移完成**：旧 dostime 项目与旧 dosday 项目（Supabase 版）均已删除，统一为 dosday 项目；域名 dosday.pages.dev 与 dosday.dpdns.org 指向同一站点
+- **数据迁移**：旧 Supabase 数据库中的 22 条日记全量迁入 Cloudflare D1（原时间戳转换为北京时间保留）；迁移前旧日记在 dostime.pages.dev 时代的 3 条一并保留，共 25 条
+- **邮件通道升级**：启用 Cloudflare Email Routing 为主发信通道（发件人 DosDay <noreply@dosday.dpdns.org>），Resend 降级为自动兜底；发件显示名与主题前缀统一为 DosDay
+- **邮件图片内嵌**：日记通知邮件中的图片改为直接嵌入邮件本体（CID 方式），解决 QQ 邮箱对新域名外链图片的过滤问题
+- **修复日记详情页**：Pages 将 /post.html 规范化为 /post 导致详情页一直“加载中”，已修复
+- **修复上传报错不显眼**：登录失效时上传图片会明确提示“登录已失效，请刷新页面重新登录”
+- **断开 Git 自动部署**：站点仅由 wrangler 手动直传部署，GitHub 仓库仅作代码备份
+
+
 ## 架构
 
 | 组件 | 服务 | 用途 |
