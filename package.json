@@ -3,5 +3,8 @@
   "private": true,
   "scripts": {
     "deploy": "wrangler pages deploy"
+  },
+  "dependencies": {
+    "mimetext": "^3.0.28"
   }
 }

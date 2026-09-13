@@ -14,7 +14,7 @@
 | 后端接口 | Pages Functions（`functions/` 目录） | 日记增删改查、图片上传、登录认证、定时邮件与任务管理 |
 | 数据库 | D1 `dostime-db` | posts（日记）、scheduled_emails（定时邮件）、tasks（任务） |
 | 图片存储 | R2 `dostime-images` | 存上传的图片，经 `/api/images/[key]` 访问 |
-| 邮件通知 | Resend 免费版 | 日记通知、定时邮件、任务提醒 |
+| 邮件通知 | Cloudflare Email Routing（主）+ Resend（兜底） | 日记通知、定时邮件、任务提醒；发件人 noreply@dosday.dpdns.org，CF 通道失败时自动降级 Resend |
 | 定时引擎 | Worker `dostime-cron` | 每 5 分钟检查到期定时邮件和过期任务并自动发邮件 |
 
 ## 三大功能
@@ -45,7 +45,7 @@ curl -H "X-Cron-Key: 你的CRON_SECRET" https://dostime-cron.doswowo.workers.dev
 |------|------|------|
 | `ADMIN_PASSWORD` | 管理后台登录密码 | 永不过期，可随时自定义 |
 | `NOTIFY_EMAIL` | 收日记通知的邮箱 | 目前为 yarnshow@qq.com |
-| `RESEND_API_KEY` | Resend 邮件服务的密钥 | 在 resend.com 的 API Keys 页面创建 |
+| `RESEND_API_KEY` | Resend 邮件服务的密钥（兜底通道） | 在 resend.com 的 API Keys 页面创建；CF 通道正常时用不到 |
 
 > 重要：任何密钥/变量修改后，必须**重新部署**才能生效（见下文）。
 > Preview 环境的变量对本站无效，改密码请认准 Production。
@@ -66,7 +66,7 @@ curl -H "X-Cron-Key: 你的CRON_SECRET" https://dostime-cron.doswowo.workers.dev
 
 与改密码同一页面、同一流程：
 
-- 换收件邮箱：编辑 `NOTIFY_EMAIL` 的值 → 重试部署
+- 换收件邮箱：编辑 `NOTIFY_EMAIL` 的值 → 重试部署。新邮箱需先在 Cloudflare（Account Home → Email → Email Routing → Destination addresses）完成验证，否则 CF 通道会发送失败
 - 换 Resend 密钥：先到 resend.com 创建新 API Key，再编辑 `RESEND_API_KEY` → 重试部署
 
 ## 免费额度参考（个人使用绰绰有余）
@@ -74,7 +74,8 @@ curl -H "X-Cron-Key: 你的CRON_SECRET" https://dostime-cron.doswowo.workers.dev
 - Pages：无限带宽，每月 500 次构建
 - D1：5GB 存储，每天 500 万行读取
 - R2：10GB 存储，出口流量免费
-- Resend：每月 3000 封邮件（发件人为 onboarding@resend.dev，只能发给注册 Resend 的邮箱；绑定自己的域名后可发给任意邮箱）
+- Cloudflare 邮件发送：包含在 Email Routing 内，个人使用无固定上限；前提是域名的 Email Routing 保持开启（dosday.dpdns.org 已开启，勿在 Dashboard 关闭）
+- Resend（兜底）：每月 3000 封（发件人为 onboarding@resend.dev，只能发给注册 Resend 的邮箱）
 - Workers：每天 10 万次请求
 
 ## 代码结构
@@ -123,4 +124,4 @@ wrangler pages deploy
 
 - dosday.pages.dev 是另一个独立站点，与本站互不影响，请勿误改
 - 免费层无备份 SLA，重要日记可在后台导出文字另行保存
-- Resend 免费版邮件可能进垃圾箱，首次收不到请检查垃圾邮件并标记为非垃圾
+- 若收到 Resend 发件人（onboarding@resend.dev）的邮件，说明 Cloudflare 通道当时发送失败、自动降级了兜底通道，属于正常现象；Resend 邮件可能进垃圾箱，首次请检查并标记为非垃圾

@@ -1,32 +1,21 @@
-import { requireAuth, json, escapeHtml } from '../../_lib/auth.js'
+import { requireAuth, json } from '../../_lib/auth.js'
+
+const NOTIFY_URL = 'https://dostime-cron.doswowo.workers.dev/notify'
 
 async function sendEmail(env, { title, content, images, createdAt }) {
-  if (!env.RESEND_API_KEY || !env.NOTIFY_EMAIL) return { sent: false, reason: '邮件服务未配置' }
-  const subject = `【dostime】新日记：${title || content.slice(0, 20)}`
-  const imgHtml = images
-    .map(u => `<p style="margin:16px 0"><img src="https://dostime.pages.dev${escapeHtml(u)}" style="max-width:100%;border-radius:8px" alt="" /></p>`)
-    .join('')
-  const titleHtml = title ? `<h2 style="margin-bottom:4px">${escapeHtml(title)}</h2>` : ''
-  const html = `<div style="font-family:-apple-system,'Segoe UI',sans-serif;max-width:640px;margin:0 auto;color:#333">
-    ${titleHtml}
-    <p style="color:#999;font-size:13px;margin-top:0">${escapeHtml(createdAt)}</p>
-    <div style="font-size:15px;line-height:1.9;white-space:normal">${escapeHtml(content).replace(/\n/g, '<br/>')}</div>
-    ${imgHtml}
-    <hr style="border:none;border-top:1px solid #eee;margin:24px 0 12px"/>
-    <p style="color:#aaa;font-size:12px">本邮件由 dostime.pages.dev 自动发送</p>
-  </div>`
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      from: 'Dostime <onboarding@resend.dev>',
-      to: [env.NOTIFY_EMAIL],
-      subject,
-      html
+  if (!env.CRON_SECRET) return { sent: false, reason: '通知密钥未配置' }
+  try {
+    const res = await fetch(NOTIFY_URL, {
+      method: 'POST',
+      headers: { 'X-Cron-Key': env.CRON_SECRET, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, content, images, createdAt })
     })
-  })
-  if (!res.ok) return { sent: false, reason: (await res.text()).slice(0, 200) }
-  return { sent: true }
+    const data = await res.json().catch(() => ({}))
+    if (res.ok && data.ok) return { sent: true, via: data.via }
+    return { sent: false, reason: `via=${data.via || 'unknown'} status=${res.status}` }
+  } catch (e) {
+    return { sent: false, reason: String(e && e.message ? e.message : e).slice(0, 200) }
+  }
 }
 
 export async function onRequestGet({ env }) {
