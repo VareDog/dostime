@@ -76,6 +76,30 @@
           </select>
           <input type="time" id="sc-time" value="08:00" />
         </div>
+        <div class="form-row">
+          <label>重复周期2</label>
+          <select id="sc-frequency2">
+            <option value="">不使用</option>
+            <option value="daily">每天</option>
+            <option value="weekly">每周</option>
+            <option value="monthly">每月</option>
+            <option value="yearly">每年</option>
+          </select>
+          <select id="sc-weekday2" class="hidden">
+            <option value="1">周一</option><option value="2">周二</option><option value="3">周三</option>
+            <option value="4">周四</option><option value="5">周五</option><option value="6">周六</option>
+            <option value="7">周日</option>
+          </select>
+          <input type="number" id="sc-monthday2" class="hidden" min="1" max="31" placeholder="几号" />
+          <select id="sc-month2" class="hidden">
+            <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option>
+            <option value="4">4月</option><option value="5">5月</option><option value="6">6月</option>
+            <option value="7">7月</option><option value="8">8月</option><option value="9">9月</option>
+            <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+          </select>
+          <input type="time" id="sc-time2" value="20:00" />
+        </div>
+        <p style="font-size:13px;color:#666;margin:4px 0 8px">重复周期2 选填：两个周期各自独立计时，到点各发一封。</p>
         <button id="sc-create-btn" class="primary">创建定时邮件</button>
         <p id="sc-msg" class="err"></p>
         <h3>已创建的定时邮件</h3>
@@ -91,7 +115,7 @@
           <label>完成日期</label>
           <input type="date" id="tk-complete" />
         </div>
-        <p style="font-size:13px;color:#666;margin:4px 0 8px">下次日期 = 完成日期 + 周期天数，自动生成：<b id="tk-next-preview">—</b>（不可手动修改）</p>
+        <p style="font-size:13px;color:#666;margin:4px 0 8px">下次任务时间：<b id="tk-next-preview">—</b>（自动生成）</p>
         <div class="form-row">
           <label>提醒时段1</label>
           <input type="time" id="tk-t1" value="08:00" />

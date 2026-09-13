@@ -1,5 +1,5 @@
 import { requireAuth, json } from '../../_lib/auth.js'
-import { initialNextSendAt, validateSchedule, describeSchedule, bjNowStr } from '../../_lib/schedule.js'
+import { initialNextSendAt, validateSchedule, validateSchedule2, shapeSchedule2, describeSchedule, bjNowStr } from '../../_lib/schedule.js'
 
 function shape(body) {
   const freq = body.frequency
@@ -25,11 +25,31 @@ export async function onRequestPost({ request, env }) {
   const body = await request.json().catch(() => ({}))
   const err = validateSchedule(body)
   if (err) return json({ error: err }, 400)
+  const err2 = validateSchedule2(body)
+  if (err2) return json({ error: err2 }, 400)
   const job = shape(body)
+  const job2 = shapeSchedule2(body)
   const next = initialNextSendAt(job)
+  const next2 = job2 ? initialNextSendAt(job2) : null
   const r = await env.DB
-    .prepare('INSERT INTO scheduled_emails (title, content, frequency, weekday, monthday, month, send_time, enabled, next_send_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)')
-    .bind(job.title, job.content, job.frequency, job.weekday, job.monthday, job.month, job.send_time, next, bjNowStr())
+    .prepare('INSERT INTO scheduled_emails (title, content, frequency, weekday, monthday, month, send_time, frequency2, weekday2, monthday2, month2, send_time2, enabled, next_send_at, next_send_at2, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)')
+    .bind(
+      job.title,
+      job.content,
+      job.frequency,
+      job.weekday,
+      job.monthday,
+      job.month,
+      job.send_time,
+      job2 ? job2.frequency : null,
+      job2 ? job2.weekday : null,
+      job2 ? job2.monthday : null,
+      job2 ? job2.month : null,
+      job2 ? job2.send_time : null,
+      next,
+      next2,
+      bjNowStr()
+    )
     .run()
-  return json({ ok: true, id: r.meta.last_row_id, next_send_at: next })
+  return json({ ok: true, id: r.meta.last_row_id, next_send_at: next, next_send_at2: next2 })
 }

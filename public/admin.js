@@ -185,6 +185,19 @@ function scSyncFields() {
   $('#sc-weekday').classList.toggle('hidden', f !== 'weekly')
   $('#sc-monthday').classList.toggle('hidden', !(f === 'monthly' || f === 'yearly'))
   $('#sc-month').classList.toggle('hidden', f !== 'yearly')
+  const f2 = $('#sc-frequency2').value
+  $('#sc-weekday2').classList.toggle('hidden', f2 !== 'weekly')
+  $('#sc-monthday2').classList.toggle('hidden', !(f2 === 'monthly' || f2 === 'yearly'))
+  $('#sc-month2').classList.toggle('hidden', f2 !== 'yearly')
+  $('#sc-time2').disabled = !f2
+}
+
+function scDescribe2(j) {
+  if (!j.frequency2) return ''
+  if (j.frequency2 === 'daily') return `每天 ${j.send_time2}`
+  if (j.frequency2 === 'weekly') return `每周${WD[(j.weekday2 || 1) - 1]} ${j.send_time2}`
+  if (j.frequency2 === 'yearly') return `每年 ${j.month2} 月 ${j.monthday2} 日 ${j.send_time2}`
+  return `每月 ${j.monthday2} 号 ${j.send_time2}`
 }
 
 async function loadSchedule() {
@@ -199,10 +212,13 @@ async function loadSchedule() {
     box.innerHTML = jobs
       .map(j => {
         const next = j.next_send_at ? new Date(j.next_send_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false }) : '—'
+        const next2 = j.next_send_at2 ? new Date(j.next_send_at2).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false }) : '—'
+        const line2 = j.frequency2 ? `<div class="d">周期2：${scDescribe2(j)} · 下次发送 ${j.enabled ? next2 : '已停用'}</div>` : ''
         return `<div class="manage-item">
           <div>
             <div>${(j.title || j.content.slice(0, 24)).replace(/</g, '&lt;')}</div>
-            <div class="d">${scDescribe(j)} · 下次发送 ${j.enabled ? next : '已停用'}</div>
+            <div class="d">周期1：${scDescribe(j)} · 下次发送 ${j.enabled ? next : '已停用'}</div>
+            ${line2}
           </div>
           <div class="acts">
             <button class="sc-toggle" data-id="${j.id}" data-en="${j.enabled}">${j.enabled ? '停用' : '启用'}</button>
@@ -244,7 +260,12 @@ async function createSchedule() {
     weekday: $('#sc-weekday').value,
     monthday: $('#sc-monthday').value,
     month: $('#sc-month').value,
-    send_time: $('#sc-time').value || '08:00'
+    send_time: $('#sc-time').value || '08:00',
+    frequency2: $('#sc-frequency2').value || '',
+    weekday2: $('#sc-weekday2').value,
+    monthday2: $('#sc-monthday2').value,
+    month2: $('#sc-month2').value,
+    send_time2: $('#sc-time2').value || '20:00'
   }
   if (!payload.content) return (msg.textContent = '邮件内容不能为空')
   const res = await fetch('/api/schedule', {
@@ -256,7 +277,8 @@ async function createSchedule() {
   if (res.ok) {
     msg.className = 'ok-msg'
     const next = data.next_send_at ? new Date(data.next_send_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false }) : ''
-    msg.textContent = `创建成功，首次发送时间：${next}`
+    const next2 = data.next_send_at2 ? new Date(data.next_send_at2).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false }) : ''
+    msg.textContent = `创建成功，周期1 首次发送：${next}${next2 ? `；周期2 首次发送：${next2}` : ''}`
     $('#sc-title').value = ''
     $('#sc-content').value = ''
     loadSchedule()
@@ -278,7 +300,12 @@ function addDaysLocal(dateStr, days) {
 
 function updateNextPreview() {
   const next = addDaysLocal($('#tk-complete').value, Number($('#tk-cycle').value))
-  $('#tk-next-preview').textContent = next || '—'
+  if (!next) {
+    $('#tk-next-preview').textContent = '—'
+    return
+  }
+  const t2 = $('#tk-t2').value
+  $('#tk-next-preview').textContent = `${next} ${$('#tk-t1').value || '--:--'}${t2 ? ` / ${t2}` : ''}`
 }
 
 function resetTaskForm() {
@@ -415,6 +442,8 @@ $$('.tab').forEach(t =>
 )
 
 $('#sc-frequency').addEventListener('change', scSyncFields)
+$('#sc-frequency2').addEventListener('change', scSyncFields)
+scSyncFields()
 $('#login-btn').addEventListener('click', login)
 $('#password').addEventListener('keydown', e => e.key === 'Enter' && login())
 $('#file').addEventListener('change', e => e.target.files.length && uploadFiles([...e.target.files]))
@@ -423,6 +452,8 @@ $('#sc-create-btn').addEventListener('click', createSchedule)
 $('#tk-create-btn').addEventListener('click', createTask)
 $('#tk-cycle').addEventListener('input', updateNextPreview)
 $('#tk-complete').addEventListener('change', updateNextPreview)
+$('#tk-t1').addEventListener('change', updateNextPreview)
+$('#tk-t2').addEventListener('change', updateNextPreview)
 $('#tk-cancel-btn').addEventListener('click', () => {
   resetTaskForm()
   $('#tk-msg').textContent = ''

@@ -26,8 +26,14 @@ CREATE TABLE IF NOT EXISTS scheduled_emails (
   monthday INTEGER,
   month INTEGER,
   send_time TEXT NOT NULL,
+  frequency2 TEXT,
+  weekday2 INTEGER,
+  monthday2 INTEGER,
+  month2 INTEGER,
+  send_time2 TEXT,
   enabled INTEGER NOT NULL DEFAULT 1,
   next_send_at TEXT,
+  next_send_at2 TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now', '+8 hours'))
 );
 

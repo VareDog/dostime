@@ -111,3 +111,47 @@ export function validateSchedule(body) {
   }
   return null
 }
+
+export function validateSchedule2(body) {
+  const freq2 = String(body.frequency2 || '').trim()
+  if (!freq2) return null
+  if (!['daily', 'weekly', 'monthly', 'yearly'].includes(freq2)) return '重复周期2类型无效'
+  const sendTime2 = String(body.send_time2 || '')
+  if (!/^\d{2}:\d{2}$/.test(sendTime2)) return '重复周期2的发送时间格式应为 HH:MM'
+  if (freq2 === 'weekly') {
+    const wd = Number(body.weekday2)
+    if (!(wd >= 1 && wd <= 7)) return '重复周期2请选择周一至周日'
+  }
+  if (freq2 === 'monthly' || freq2 === 'yearly') {
+    const md = Number(body.monthday2)
+    if (!(md >= 1 && md <= 31)) return '重复周期2的日期应为 1-31'
+  }
+  if (freq2 === 'yearly') {
+    const mo = Number(body.month2)
+    if (!(mo >= 1 && mo <= 12)) return '重复周期2的月份应为 1-12'
+  }
+  return null
+}
+
+export function shapeSchedule2(body) {
+  const freq2 = String(body.frequency2 || '').trim()
+  if (!freq2) return null
+  return {
+    frequency: freq2,
+    weekday: freq2 === 'weekly' ? Number(body.weekday2) : null,
+    monthday: freq2 === 'monthly' || freq2 === 'yearly' ? Number(body.monthday2) : null,
+    month: freq2 === 'yearly' ? Number(body.month2) : null,
+    send_time: String(body.send_time2 || '08:00')
+  }
+}
+
+export function schedule2FromRow(row) {
+  if (!row.frequency2) return null
+  return {
+    frequency: row.frequency2,
+    weekday: row.weekday2,
+    monthday: row.monthday2,
+    month: row.month2,
+    send_time: row.send_time2 || '08:00'
+  }
+}

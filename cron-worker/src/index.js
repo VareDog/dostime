@@ -162,8 +162,8 @@ async function sendWithFallback(env, subject, html, attachments = []) {
 async function processScheduledEmails(env) {
   const now = new Date().toISOString()
   const { results } = await env.DB
-    .prepare('SELECT * FROM scheduled_emails WHERE enabled = 1 AND next_send_at IS NOT NULL AND next_send_at <= ?')
-    .bind(now)
+    .prepare('SELECT * FROM scheduled_emails WHERE enabled = 1 AND ((next_send_at IS NOT NULL AND next_send_at <= ?) OR (next_send_at2 IS NOT NULL AND next_send_at2 <= ?))')
+    .bind(now, now)
     .all()
   if (!results || !results.length) return 'no due emails'
   let sent = 0
@@ -174,14 +174,30 @@ async function processScheduledEmails(env) {
       <h2 style="margin-bottom:4px">${escapeHtml(job.title || '定时邮件')}</h2>
       <p style="color:#999;font-size:13px;margin-top:0">${bjTodayStr()}</p>
       <div style="font-size:15px;line-height:1.9">${escapeHtml(job.content).replace(/\n/g, '<br/>')}</div>`)
-    const via = await sendWithFallback(env, subject, html)
-    if (via) {
-      sent++
-      await env.DB.prepare('UPDATE scheduled_emails SET next_send_at = ? WHERE id = ?')
-        .bind(futureNextSendAt(job), job.id)
-        .run()
-    } else {
-      errors.push(`id=${job.id}`)
+    const due1 = job.next_send_at && job.next_send_at <= now
+    const due2 = job.next_send_at2 && job.next_send_at2 <= now
+    if (due1) {
+      const via = await sendWithFallback(env, subject, html)
+      if (via) {
+        sent++
+        await env.DB.prepare('UPDATE scheduled_emails SET next_send_at = ? WHERE id = ?')
+          .bind(futureNextSendAt(job), job.id)
+          .run()
+      } else {
+        errors.push(`id=${job.id}`)
+      }
+    }
+    if (due2) {
+      const via = await sendWithFallback(env, subject, html)
+      if (via) {
+        sent++
+        const job2 = { frequency: job.frequency2, weekday: job.weekday2, monthday: job.monthday2, month: job.month2, send_time: job.send_time2 }
+        await env.DB.prepare('UPDATE scheduled_emails SET next_send_at2 = ? WHERE id = ?')
+          .bind(futureNextSendAt(job2), job.id)
+          .run()
+      } else {
+        errors.push(`id=${job.id}-2`)
+      }
     }
   }
   return `sent=${sent}${errors.length ? ' errors=' + errors.join(',') : ''}`
