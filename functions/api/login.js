@@ -7,6 +7,6 @@ export async function onRequestPost({ request, env }) {
   }
   const token = await makeToken(env)
   return json({ ok: true }, 200, {
-    'Set-Cookie': `session=${token}; HttpOnly; Secure; Path=/; Max-Age=604800; SameSite=Lax`
+    'Set-Cookie': `session=${token}; HttpOnly; Secure; Path=/; Max-Age=34473600; SameSite=Lax`
   })
 }

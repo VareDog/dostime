@@ -7,7 +7,7 @@ async function hmac(secret, msg) {
 }
 
 export async function makeToken(env) {
-  const exp = String(Date.now() + 7 * 86400 * 1000)
+  const exp = String(Date.now() + 399 * 86400 * 1000)
   const sig = await hmac(env.ADMIN_PASSWORD, exp)
   return `${exp}.${sig}`
 }
