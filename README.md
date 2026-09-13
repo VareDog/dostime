@@ -2,8 +2,8 @@
 
 个人日记网站，部署在 Cloudflare Pages（免费套餐），支持在线写日记、上传图片、发表后自动将图文发送到指定邮箱。
 
-- 网站：https://dostime.pages.dev
-- 管理后台：https://dostime.pages.dev/admin.html
+- 网站：https://dosday.dpdns.org
+- 管理后台：https://dosday.dpdns.org/admin.html
 - 代码仓库：https://github.com/VareDog/dostime
 
 ## 架构
@@ -122,6 +122,6 @@ wrangler pages deploy
 
 ## 注意事项
 
-- dosday.pages.dev 是另一个独立站点，与本站互不影响，请勿误改
+- dostime.pages.dev 曾为本站旧域名，2026-09-13 起站点已迁移为 dosday 项目（dosday.pages.dev 与 dosday.dpdns.org 同站）；旧 Supabase 数据已全量迁入 D1，确认无误后可在 supabase.com 关闭旧项目
 - 免费层无备份 SLA，重要日记可在后台导出文字另行保存
 - 若收到 Resend 发件人（onboarding@resend.dev）的邮件，说明 Cloudflare 通道当时发送失败、自动降级了兜底通道，属于正常现象；Resend 邮件可能进垃圾箱，首次请检查并标记为非垃圾

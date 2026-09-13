@@ -25,3 +25,14 @@ This file records user instructions, preferences, and teachings for reference in
 - Category: Environment Configuration
 - Instructions:
   - 会话级凭据统一存放在 /tmp/opencode/dostime.env（不进 git、不进工作区），使用前 source
+
+[Project Knowledge Summary]
+- Date: 2026-09-13
+- Context: 邮件双通道改造（CF Email Routing 主通道 + Resend 兜底）上线验证通过时发现
+- Category: Operations & Deployment
+- Instructions:
+  - 邮件架构：CF Email Routing 为主（发件人 noreply@dosday.dpdns.org），Resend 自动降级兜底；dosday.dpdns.org zone 的 Email Routing 已开启（status=ready，MX/DKIM/SPF 自动配置），勿在 Dashboard 关闭
+  - 关键坑：wrangler.toml 中 send_email=[{name="SEND_EMAIL"}] 必须放在任何 [[section]] 之前的顶层位置，写在 [[d1_databases]] 段之后会被 TOML 解析吞掉、绑定静默失效（部署不报错但发信必败），排查手段是查 Worker settings 的 bindings 列表
+  - Worker /notify 端点：日记发表即时通知由 Pages Functions 调 Worker 的 POST /notify（X-Cron-Key 头鉴权）；GET /test?key= 是邮件通道测试端点，结果（via/cfError）写入 D1 表 mail_channel_log
+  - CF send_email 的收件人必须是账户内已验证的 destination address（当前 yarnshow@qq.com 已验证）；换收件邮箱需先在 Email Routing → Destination addresses 验证
+  - 用户 Global API Key（配 doswowo@gmail.com）曾用于本次配置，会话后建议用户在 Dashboard Roll/撤销；凭据存 /tmp/opencode/cf_global.env
