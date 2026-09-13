@@ -82,18 +82,6 @@ export function bjTodayStr(from = new Date()) {
   return bj.toISOString().slice(0, 10)
 }
 
-const REC_DAYS = { daily: 1, weekly: 7, monthly: 30, yearly: 365 }
-
-export function nextDueDate(dueDate, recurrence) {
-  if (!recurrence || recurrence === 'once' || !REC_DAYS[recurrence]) return dueDate
-  const [y, mo, d] = dueDate.split('-').map(Number)
-  const base = new Date(Date.UTC(y, mo - 1, d))
-  if (recurrence === 'monthly') base.setUTCMonth(base.getUTCMonth() + 1)
-  else if (recurrence === 'yearly') base.setUTCFullYear(base.getUTCFullYear() + 1)
-  else base.setUTCDate(base.getUTCDate() + REC_DAYS[recurrence])
-  return base.toISOString().slice(0, 10)
-}
-
 export function validateSchedule(body) {
   const freq = body.frequency
   const sendTime = String(body.send_time || '')

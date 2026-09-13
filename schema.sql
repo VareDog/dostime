@@ -15,19 +15,14 @@ CREATE TABLE IF NOT EXISTS scheduled_emails (
 CREATE TABLE IF NOT EXISTS tasks (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   title TEXT NOT NULL,
-  note TEXT NOT NULL DEFAULT '',
-  due_date TEXT NOT NULL,
-  recurrence TEXT NOT NULL DEFAULT 'once' CHECK (recurrence IN ('once','daily','weekly','monthly','yearly')),
-  completed INTEGER NOT NULL DEFAULT 0,
-  last_notified_date TEXT,
-  created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
-);
-
-CREATE TABLE IF NOT EXISTS comments (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  post_id INTEGER NOT NULL,
-  name TEXT NOT NULL DEFAULT '',
-  content TEXT NOT NULL,
+  cycle_days INTEGER NOT NULL DEFAULT 1,
+  complete_date TEXT,
+  next_date TEXT NOT NULL,
+  remind_time_1 TEXT NOT NULL DEFAULT '08:00',
+  remind_time_2 TEXT,
+  enabled INTEGER NOT NULL DEFAULT 1,
+  last_slot1_date TEXT,
+  last_slot2_date TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
 

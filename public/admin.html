@@ -83,22 +83,22 @@
       </section>
 
       <section id="panel-tasks" class="panel hidden">
-        <h2>新建任务</h2>
-        <input type="text" id="tk-title" placeholder="任务内容（必填）" maxlength="100" />
-        <textarea id="tk-note" rows="3" placeholder="备注（可不填）"></textarea>
+        <h2 id="tk-form-title">新建任务</h2>
+        <input type="text" id="tk-title" placeholder="任务内容（必填，如：进行厨房大清洁）" maxlength="100" />
         <div class="form-row">
-          <label>截止日期</label>
-          <input type="date" id="tk-due" />
-          <label>重复周期</label>
-          <select id="tk-recurrence">
-            <option value="once">单次</option>
-            <option value="daily">每天</option>
-            <option value="weekly">每周</option>
-            <option value="monthly">每月</option>
-            <option value="yearly">每年</option>
-          </select>
+          <label>周期天数</label>
+          <input type="number" id="tk-cycle" min="1" max="3650" value="28" style="max-width:100px" />
+          <label>下次日期</label>
+          <input type="date" id="tk-next" />
+        </div>
+        <div class="form-row">
+          <label>提醒时段1</label>
+          <input type="time" id="tk-t1" value="08:00" />
+          <label>提醒时段2</label>
+          <input type="time" id="tk-t2" value="20:00" />
         </div>
         <button id="tk-create-btn" class="primary">创建任务</button>
+        <button id="tk-cancel-btn" class="hidden">取消编辑</button>
         <p id="tk-msg" class="err"></p>
         <h3>任务列表</h3>
         <div id="tasks-list"><div class="loading">加载中…</div></div>

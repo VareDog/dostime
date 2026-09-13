@@ -172,7 +172,6 @@ async function loadManage() {
 
 const WD = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
 const FREQ = { daily: '每天', weekly: '每周', monthly: '每月', yearly: '每年' }
-const REC = { once: '单次', daily: '每天', weekly: '每周', monthly: '每月', yearly: '每年' }
 
 function scDescribe(job) {
   if (job.frequency === 'daily') return `每天 ${job.send_time}`
@@ -266,11 +265,25 @@ async function createSchedule() {
   }
 }
 
+let editingTaskId = null
+
+function resetTaskForm() {
+  editingTaskId = null
+  $('#tk-title').value = ''
+  $('#tk-cycle').value = 28
+  $('#tk-next').value = ''
+  $('#tk-t1').value = '08:00'
+  $('#tk-t2').value = '20:00'
+  $('#tk-form-title').textContent = '新建任务'
+  $('#tk-create-btn').textContent = '创建任务'
+  $('#tk-cancel-btn').classList.add('hidden')
+}
+
 async function loadTasks() {
   const box = $('#tasks-list')
   try {
     const res = await fetch('/api/tasks')
-    const { tasks } = await res.json()
+    const { tasks, today } = await res.json()
     if (!tasks || !tasks.length) {
       box.innerHTML = '<div class="empty">还没有任务。</div>'
       return
@@ -278,16 +291,19 @@ async function loadTasks() {
     box.innerHTML = tasks
       .map(t => {
         let badge = ''
-        if (t.completed) badge = '<span class="badge done">已完成</span>'
-        else if (t.overdue) badge = '<span class="badge over">已过期</span>'
-        else if (t.due_today) badge = '<span class="badge today">今日到期</span>'
-        return `<div class="manage-item ${t.completed ? 'item-done' : ''}">
+        if (!t.enabled) badge = '<span class="badge">已停用</span>'
+        else if (t.over_days > 0) badge = `<span class="badge over">已超期 ${t.over_days} 天</span>`
+        else if (t.due_today) badge = '<span class="badge today">今天到期</span>'
+        else badge = '<span class="badge">监测中</span>'
+        return `<div class="manage-item ${t.enabled ? '' : 'item-done'}">
           <div>
             <div>${t.title.replace(/</g, '&lt;')} ${badge}</div>
-            <div class="d">截止 ${t.due_date} · ${REC[t.recurrence] || t.recurrence}${t.note ? ' · ' + t.note.replace(/</g, '&lt;').slice(0, 40) : ''}</div>
+            <div class="d">每 ${t.cycle_days} 天 · 下次 ${t.next_date} · 时段1 ${t.remind_time_1}${t.remind_time_2 ? ` · 时段2 ${t.remind_time_2}` : ''} · 今天 ${today}</div>
           </div>
           <div class="acts">
-            <button class="tk-done" data-id="${t.id}" data-c="${t.completed}">${t.completed ? '重开' : t.recurrence !== 'once' ? '完成本期' : '完成'}</button>
+            <button class="tk-done" data-id="${t.id}">完成本期</button>
+            <button class="tk-edit" data-id="${t.id}">编辑</button>
+            <button class="tk-toggle" data-id="${t.id}">${t.enabled ? '停用' : '启用'}</button>
             <button class="danger tk-del" data-id="${t.id}">删除</button>
           </div>
         </div>`
@@ -298,13 +314,38 @@ async function loadTasks() {
         const res = await fetch(`/api/tasks/${b.dataset.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: b.dataset.c === 'true' ? 'reopen' : 'complete' })
+          body: JSON.stringify({ action: 'complete' })
         })
         const data = await res.json()
         if (res.ok && data.rolled) {
           $('#tk-msg').className = 'ok-msg'
-          $('#tk-msg').textContent = `已完成本期，下期截止：${data.due_date}`
+          $('#tk-msg').textContent = `已完成本期（${data.complete_date}），下次日期顺延至：${data.next_date}`
         }
+        loadTasks()
+      })
+    )
+    box.querySelectorAll('.tk-edit').forEach(b =>
+      b.addEventListener('click', async () => {
+        const t = tasks.find(x => String(x.id) === b.dataset.id)
+        editingTaskId = t.id
+        $('#tk-title').value = t.title
+        $('#tk-cycle').value = t.cycle_days
+        $('#tk-next').value = t.next_date
+        $('#tk-t1').value = t.remind_time_1
+        $('#tk-t2').value = t.remind_time_2 || ''
+        $('#tk-form-title').textContent = '编辑任务'
+        $('#tk-create-btn').textContent = '保存修改'
+        $('#tk-cancel-btn').classList.remove('hidden')
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      })
+    )
+    box.querySelectorAll('.tk-toggle').forEach(b =>
+      b.addEventListener('click', async () => {
+        await fetch(`/api/tasks/${b.dataset.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'toggle' })
+        })
         loadTasks()
       })
     )
@@ -326,26 +367,26 @@ async function createTask() {
   msg.textContent = ''
   const payload = {
     title: $('#tk-title').value.trim(),
-    note: $('#tk-note').value.trim(),
-    due_date: $('#tk-due').value,
-    recurrence: $('#tk-recurrence').value
+    cycle_days: Number($('#tk-cycle').value),
+    next_date: $('#tk-next').value,
+    remind_time_1: $('#tk-t1').value,
+    remind_time_2: $('#tk-t2').value
   }
   if (!payload.title) return (msg.textContent = '任务内容不能为空')
-  if (!payload.due_date) return (msg.textContent = '请选择截止日期')
-  const res = await fetch('/api/tasks', {
-    method: 'POST',
+  if (!payload.next_date) return (msg.textContent = '请选择下次日期')
+  const res = await fetch(editingTaskId ? `/api/tasks/${editingTaskId}` : '/api/tasks', {
+    method: editingTaskId ? 'PUT' : 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   })
   const data = await res.json()
   if (res.ok) {
     msg.className = 'ok-msg'
-    msg.textContent = '任务创建成功，到期或过期后每天会收到邮件提醒'
-    $('#tk-title').value = ''
-    $('#tk-note').value = ''
+    msg.textContent = editingTaskId ? '任务已更新' : '任务创建成功：到达下次日期后，每天将在提醒时段发送邮件'
+    resetTaskForm()
     loadTasks()
   } else {
-    msg.textContent = data.error || '创建失败'
+    msg.textContent = data.error || '操作失败'
   }
 }
 
@@ -365,6 +406,11 @@ $('#file').addEventListener('change', e => e.target.files.length && uploadFiles(
 $('#publish-btn').addEventListener('click', publish)
 $('#sc-create-btn').addEventListener('click', createSchedule)
 $('#tk-create-btn').addEventListener('click', createTask)
+$('#tk-cancel-btn').addEventListener('click', () => {
+  resetTaskForm()
+  $('#tk-msg').textContent = ''
+  $('#tk-msg').className = 'err'
+})
 $('#logout-link').addEventListener('click', async e => {
   e.preventDefault()
   await fetch('/api/logout', { method: 'POST' })

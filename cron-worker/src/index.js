@@ -187,28 +187,48 @@ async function processScheduledEmails(env) {
   return `sent=${sent}${errors.length ? ' errors=' + errors.join(',') : ''}`
 }
 
+function bjNowHM() {
+  return new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(11, 16)
+}
+
+function diffDays(fromDate, toDate) {
+  return Math.round((Date.parse(toDate + 'T00:00:00Z') - Date.parse(fromDate + 'T00:00:00Z')) / 86400000)
+}
+
+function addDays(dateStr, days) {
+  return new Date(Date.parse(dateStr + 'T00:00:00Z') + days * 86400000).toISOString().slice(0, 10)
+}
+
 async function processTasks(env) {
   const today = bjTodayStr()
+  const nowHM = bjNowHM()
   const { results } = await env.DB
-    .prepare("SELECT * FROM tasks WHERE completed = 0 AND due_date <= ? AND (last_notified_date IS NULL OR last_notified_date < ?)")
-    .bind(today, today)
+    .prepare('SELECT * FROM tasks WHERE enabled = 1 AND next_date <= ?')
+    .bind(today)
     .all()
   if (!results || !results.length) return 'no due tasks'
   let sent = 0
-  for (const task of results) {
-    const overdue = task.due_date < today
-    const kind = overdue ? '任务已过期' : '今日到期任务'
-    const subject = `【DosDay】${kind}：${task.title}`
-    const rec = { once: '单次', daily: '每天', weekly: '每周', monthly: '每月', yearly: '每年' }[task.recurrence] || task.recurrence
-    const html = wrapHtml(`
-      <h2 style="margin-bottom:4px">${escapeHtml(task.title)}</h2>
-      <p style="color:#b4443c;font-size:13px;margin-top:0">${kind} · 截止日期 ${escapeHtml(task.due_date)} · 周期 ${rec}</p>
-      ${task.note ? `<div style="font-size:15px;line-height:1.9">${escapeHtml(task.note).replace(/\n/g, '<br/>')}</div>` : ''}
-      <p style="font-size:13px;color:#666;margin-top:16px">完成后请到 <a href="${SITE}/admin.html">${SITE} 后台</a> 勾选完成；周期任务完成后会自动顺延到下一期。</p>`)
-    const via = await sendWithFallback(env, subject, html)
-    if (via) {
-      sent++
-      await env.DB.prepare('UPDATE tasks SET last_notified_date = ? WHERE id = ?').bind(today, task.id).run()
+  for (const t of results) {
+    const slots = [
+      { n: 1, time: t.remind_time_1, last: t.last_slot1_date, col: 'last_slot1_date' },
+      { n: 2, time: t.remind_time_2, last: t.last_slot2_date, col: 'last_slot2_date' }
+    ]
+    for (const s of slots) {
+      if (!s.time || s.last === today) continue
+      if (nowHM < s.time) continue
+      const over = diffDays(t.next_date, today)
+      const kind = over > 0 ? `已超期 ${over} 天` : '今天到期'
+      const subject = `【DosDay】任务提醒（时段${s.n}）：${t.title}`
+      const html = wrapHtml(`
+        <h2 style="margin-bottom:4px">${escapeHtml(t.title)}</h2>
+        <p style="color:#b4443c;font-size:13px;margin-top:0">${kind} · 下次日期 ${escapeHtml(t.next_date)} · 每 ${t.cycle_days} 天一周期</p>
+        <p style="font-size:13.5px;color:#666;margin-top:10px">提醒时段${s.n}：${escapeHtml(s.time)}（北京时间）${t.remind_time_2 ? ` · 时段2：${escapeHtml(t.remind_time_2)}` : ''}</p>
+        <p style="font-size:13px;color:#666;margin-top:16px">完成后请到 <a href="${SITE}/admin.html">${SITE} 后台</a> 点「完成本期」，下次日期将自动顺延 ${t.cycle_days} 天。</p>`)
+      const via = await sendWithFallback(env, subject, html)
+      if (via) {
+        sent++
+        await env.DB.prepare(`UPDATE tasks SET ${s.col} = ? WHERE id = ?`).bind(today, t.id).run()
+      }
     }
   }
   return `notified=${sent}`
@@ -275,7 +295,8 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url)
     if (url.pathname === '/run' && request.method === 'GET') {
-      if (!env.CRON_SECRET || request.headers.get('X-Cron-Key') !== env.CRON_SECRET) {
+      const key = url.searchParams.get('key')
+      if (!env.CRON_SECRET || (request.headers.get('X-Cron-Key') !== env.CRON_SECRET && key !== env.CRON_SECRET)) {
         return new Response('unauthorized', { status: 401 })
       }
       const result = await runAll(env)
