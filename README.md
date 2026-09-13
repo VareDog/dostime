@@ -122,6 +122,6 @@ wrangler pages deploy
 
 ## 注意事项
 
-- dostime.pages.dev 曾为本站旧域名，2026-09-13 起站点已迁移为 dosday 项目（dosday.pages.dev 与 dosday.dpdns.org 同站）；旧 Supabase 数据已全量迁入 D1，确认无误后可在 supabase.com 关闭旧项目
+- dostime.pages.dev 已于 2026-09-13 随项目迁移删除释放，本站最终域名为 dosday.pages.dev 与 dosday.dpdns.org（同一项目）；旧 Supabase 数据已全量迁入 D1，确认无误后可在 supabase.com 关闭旧项目
 - 免费层无备份 SLA，重要日记可在后台导出文字另行保存
 - 若收到 Resend 发件人（onboarding@resend.dev）的邮件，说明 Cloudflare 通道当时发送失败、自动降级了兜底通道，属于正常现象；Resend 邮件可能进垃圾箱，首次请检查并标记为非垃圾
