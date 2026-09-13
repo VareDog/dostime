@@ -35,3 +35,6 @@ CREATE INDEX IF NOT EXISTS comments_post_idx ON comments (post_id, id);
 
 -- 2026-09-13: 置顶功能
 ALTER TABLE posts ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0;
+
+-- 2026-09-13: 评论增加电话字段
+ALTER TABLE comments ADD COLUMN phone TEXT NOT NULL DEFAULT '';

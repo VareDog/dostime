@@ -78,7 +78,7 @@ async function renderComments(postId) {
     box.innerHTML = !comments || !comments.length
       ? '<div class="empty">还没有评论，来说两句吧。</div>'
       : comments
-          .map(c => `<div class="comment"><div class="comment-head"><b>${escapeHtml(c.name)}</b><span class="date">${fmtDate(c.created_at)}</span></div><p>${escapeHtml(c.content)}</p></div>`)
+          .map(c => `<div class="comment"><div class="comment-head"><b>${escapeHtml(c.name)}</b>${c.phone ? `<span class="c-phone">${escapeHtml(c.phone)}</span>` : ''}<span class="date">${fmtDate(c.created_at)}</span></div><p>${escapeHtml(c.content)}</p></div>`)
           .join('')
   } catch (e) {
     box.innerHTML = '<div class="empty">评论加载失败。</div>'
@@ -93,6 +93,7 @@ function bindCommentForm(postId) {
     e.preventDefault()
     const status = $('#c-status')
     const name = $('#c-name').value.trim()
+    const phone = $('#c-phone').value.trim()
     const content = $('#c-content').value.trim()
     if (!name || !content) return
     status.textContent = '提交中…'
@@ -100,7 +101,7 @@ function bindCommentForm(postId) {
       const res = await fetch(`/api/posts/${postId}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, content })
+        body: JSON.stringify({ name, phone, content })
       })
       const data = await res.json().catch(() => ({}))
       if (res.ok) {

@@ -218,6 +218,7 @@ async function sendCommentNotify(env, body) {
   const post = body.post || {}
   const c = body.comment || {}
   const name = String(c.name || '').slice(0, 30)
+  const phone = String(c.phone || '').slice(0, 20)
   const cContent = String(c.content || '').slice(0, 1000)
   const createdAt = String(c.createdAt || bjTodayStr())
   const postTitle = String(post.title || '').slice(0, 120)
@@ -231,7 +232,7 @@ async function sendCommentNotify(env, body) {
       <div style="font-size:14px;color:#666;margin-top:6px;line-height:1.8">${escapeHtml(postContent).replace(/\n/g, '<br/>')}</div>
     </div>
     <div style="background:#fff8e6;border-radius:8px;padding:12px 16px;margin:14px 0">
-      <div style="font-size:14px"><b>${escapeHtml(name)}</b> <span style="color:#999;font-size:12px">${escapeHtml(createdAt)}</span></div>
+      <div style="font-size:14px"><b>${escapeHtml(name)}</b>${phone ? ` <span style="color:#555">（电话：${escapeHtml(phone)}）</span>` : ''} <span style="color:#999;font-size:12px">${escapeHtml(createdAt)}</span></div>
       <div style="font-size:15px;line-height:1.8;margin-top:6px">${escapeHtml(cContent).replace(/\n/g, '<br/>')}</div>
     </div>`)
   const via = await sendWithFallback(env, subject, html)

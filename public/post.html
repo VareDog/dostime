@@ -25,7 +25,10 @@
       <h3>评论</h3>
       <div id="comments" class="comment-list"></div>
       <form id="comment-form" class="comment-form">
-        <input id="c-name" type="text" maxlength="30" placeholder="你的姓名（必填）" required />
+        <div class="cf-row">
+          <input id="c-name" type="text" maxlength="30" placeholder="你的姓名（必填）" required />
+          <input id="c-phone" type="tel" maxlength="20" placeholder="电话（选填）" />
+        </div>
         <textarea id="c-content" maxlength="1000" rows="3" placeholder="写下你的评论…" required></textarea>
         <button type="submit">提交评论</button>
         <span id="c-status" class="c-status"></span>
