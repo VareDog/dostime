@@ -45,7 +45,7 @@ This file records user instructions, preferences, and teachings for reference in
   - 现主站为 Cloudflare Pages 项目 dosday（代码=dostime 仓库），域名 dosday.pages.dev 与自定义域 dosday.dpdns.org 同站；管理后台 /admin.html，密码 123456abs
   - 旧 dosday 项目（Supabase SPA，Vite+PWA）已于 2026-09-13 删除；其数据源是 Supabase 项目 lfnxuqcvuvheyhdbzclq.supabase.co（notes/scheduled_emails/recurring_tasks 表，RLS 保护），22 条日记已迁入 D1 posts（title 全空→存''，时间转北京时间格式），2 条测试定时邮件迁入但 enabled=0，1 条测试任务迁入 completed=1；Supabase 云端数据未删除，用户可自行关闭该项目
   - 迁移踩坑：删 Pages 项目前必须先删自定义域（否则 8000028 报错）；wrangler 4.131 直接 pages deploy 不再自动建项目，需先 wrangler pages project create
-  - dostime Pages 项目（dostime.pages.dev）仍存在且与新站共用同一 D1/R2，是否删除待用户决定；删除不影响新站
+  - dostime Pages 项目已于 2026-09-13 按用户要求删除（dostime.pages.dev 已释放）；唯一日记站为 dosday 项目，两个域名同站
   - dosday.dpdns.org zone 的 Email Routing（MX/DKIM/SPF）独立于 Pages 项目，删项目不受影响；zone 内 CNAME dosday.dpdns.org→dosday.pages.dev 与 MX 共存正常
   - 沙箱可访问 dosday.dpdns.org（第三方域名，未被出网白名单挡），验证站点可直接 curl 该域；*.pages.dev/*.workers.dev 仍被挡
   - Pages secrets（新项目 dosday 已配齐）：ADMIN_PASSWORD、NOTIFY_EMAIL、RESEND_API_KEY、CRON_SECRET

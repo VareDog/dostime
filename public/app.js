@@ -68,5 +68,5 @@ async function renderPost() {
   }
 }
 
-if (location.pathname === '/post.html') renderPost()
+if ($('#post')) renderPost()
 else renderList()
