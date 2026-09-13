@@ -246,11 +246,12 @@ async function runAll(env) {
 }
 
 async function sendDiaryNotify(env, body) {
+  const isUpdate = body.type === 'update'
   const title = String(body.title || '').slice(0, 120)
   const content = String(body.content || '')
   const images = Array.isArray(body.images) ? body.images.slice(0, 20) : []
   const createdAt = String(body.createdAt || bjTodayStr())
-  const subject = `【DosDay】新日记：${title || content.slice(0, 20)}`
+  const subject = isUpdate ? `【DosDay】日记更新：${title || content.slice(0, 20)}` : `【DosDay】新日记：${title || content.slice(0, 20)}`
   const { attachments, fallbackUrls } = await fetchImageAttachments(images)
   const inlineHtml = attachments
     .map(a => `<p style="margin:16px 0"><img src="cid:${a.cid}" style="max-width:100%;border-radius:8px" alt="" /></p>`)
@@ -259,7 +260,7 @@ async function sendDiaryNotify(env, body) {
     .map(u => `<p style="margin:16px 0"><img src="${(u.startsWith('http') ? u : SITE + u).replace(/"/g, '%22')}" style="max-width:100%;border-radius:8px" alt="" /></p>`)
     .join('')
   const html = wrapHtml(`
-    ${title ? `<h2 style="margin-bottom:4px">${escapeHtml(title)}</h2>` : ''}
+    <h2 style="margin-bottom:4px">${escapeHtml(isUpdate ? '日记已更新' : (title || '新日记'))}</h2>
     <p style="color:#999;font-size:13px;margin-top:0">${escapeHtml(createdAt)}</p>
     <div style="font-size:15px;line-height:1.9;white-space:normal">${escapeHtml(content).replace(/\n/g, '<br/>')}</div>
     ${inlineHtml}${fallbackHtml}`)

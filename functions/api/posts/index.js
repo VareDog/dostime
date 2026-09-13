@@ -1,27 +1,10 @@
 import { requireAuth, json } from '../../_lib/auth.js'
-
-const NOTIFY_URL = 'https://dostime-cron.doswowo.workers.dev/notify'
+import { sendNotify } from '../../_lib/notify.js'
 
 function autoTitle(title, content) {
   const t = (title || '').trim()
   if (t) return t.slice(0, 100)
   return Array.from(content.trim().replace(/\s+/g, ' ')).slice(0, 12).join('') || '无题'
-}
-
-async function sendEmail(env, { title, content, images, createdAt }) {
-  if (!env.CRON_SECRET) return { sent: false, reason: '通知密钥未配置' }
-  try {
-    const res = await fetch(NOTIFY_URL, {
-      method: 'POST',
-      headers: { 'X-Cron-Key': env.CRON_SECRET, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, content, images, createdAt })
-    })
-    const data = await res.json().catch(() => ({}))
-    if (res.ok && data.ok) return { sent: true, via: data.via }
-    return { sent: false, reason: `via=${data.via || 'unknown'} status=${res.status}` }
-  } catch (e) {
-    return { sent: false, reason: String(e && e.message ? e.message : e).slice(0, 200) }
-  }
 }
 
 export async function onRequestGet({ env }) {
@@ -46,7 +29,7 @@ export async function onRequestPost({ request, env }) {
     .run()
   let email = { sent: false, reason: '未知' }
   try {
-    email = await sendEmail(env, {
+    email = await sendNotify(env, {
       title,
       content,
       images,
@@ -55,5 +38,5 @@ export async function onRequestPost({ request, env }) {
   } catch (e) {
     email = { sent: false, reason: String(e && e.message ? e.message : e).slice(0, 200) }
   }
-  return json({ ok: true, id: r.meta.last_row_id, email })
+  return json({ ok: true, id: r.meta.last_row_id, title, email })
 }

@@ -101,10 +101,13 @@ async function publish() {
     })
     const data = await res.json()
     if (res.ok) {
+      const isEdit = method === 'PUT'
+      const okText = isEdit ? '已保存，更新邮件已发送到你的邮箱' : '发表成功，通知邮件已发送到你的邮箱'
+      const failText = isEdit ? '已保存，更新邮件发送失败：' : '已保存，通知邮件发送失败：'
       msg.className = 'ok-msg'
       msg.textContent = data.email && data.email.sent
-        ? '发表成功，通知邮件已发送到你的邮箱'
-        : `已保存，邮件发送失败：${data.email && data.email.reason ? data.email.reason : '未知原因'}`
+        ? okText
+        : `${failText}${data.email && data.email.reason ? data.email.reason : '未知原因'}`
       resetEditor()
       loadManage()
     } else {

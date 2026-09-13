@@ -1,4 +1,5 @@
 import { requireAuth, json } from '../../_lib/auth.js'
+import { sendNotify } from '../../_lib/notify.js'
 
 function autoTitle(title, content) {
   const t = (title || '').trim()
@@ -29,7 +30,19 @@ export async function onRequestPut({ request, params, env }) {
     .bind(title, content, JSON.stringify(images), pinned, params.id)
     .run()
   if (!r.meta.changes) return json({ error: '未找到' }, 404)
-  return json({ ok: true })
+  let email = { sent: false, reason: '未知' }
+  try {
+    email = await sendNotify(env, {
+      type: 'update',
+      title,
+      content,
+      images,
+      createdAt: new Date().toISOString().replace('T', ' ').slice(0, 16) + ' UTC'
+    })
+  } catch (e) {
+    email = { sent: false, reason: String(e && e.message ? e.message : e).slice(0, 200) }
+  }
+  return json({ ok: true, email })
 }
 
 export async function onRequestDelete({ request, params, env }) {
