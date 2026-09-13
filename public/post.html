@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>日记详情 · Dostime</title>
+  <title>日记详情 · DosDay</title>
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
   <header class="site-header">
     <div class="wrap header-inner">
-      <a class="logo" href="/">Dostime</a>
+      <a class="logo" href="/">DosDay</a>
       <nav>
         <a href="/">日记</a>
         <a href="/admin.html">写日记</a>
@@ -21,8 +21,18 @@
       <div class="loading">加载中…</div>
     </article>
     <div class="post-nav"><a href="/">← 返回日记列表</a></div>
+    <section class="comments" id="comments-box">
+      <h3>评论</h3>
+      <div id="comments" class="comment-list"></div>
+      <form id="comment-form" class="comment-form">
+        <input id="c-name" type="text" maxlength="30" placeholder="你的姓名（必填）" required />
+        <textarea id="c-content" maxlength="1000" rows="3" placeholder="写下你的评论…" required></textarea>
+        <button type="submit">提交评论</button>
+        <span id="c-status" class="c-status"></span>
+      </form>
+    </section>
   </main>
-  <footer class="wrap site-footer">© 2026 Dostime · dosday.dpdns.org</footer>
+  <footer class="wrap site-footer">© 2026 DosDay · dosday.dpdns.org</footer>
   <script src="/app.js"></script>
 </body>
 </html>

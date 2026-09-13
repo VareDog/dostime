@@ -50,7 +50,7 @@ async function renderPost() {
       return
     }
     const { post } = await res.json()
-    document.title = `${post.title || '无题'} · Dostime`
+    document.title = `${post.title || '无题'} · DosDay`
     const paras = escapeHtml(post.content)
       .split('\n')
       .filter(l => l.trim())
@@ -63,9 +63,57 @@ async function renderPost() {
       ${post.title ? `<h1>${escapeHtml(post.title)}</h1>` : ''}
       <div class="date">${fmtDate(post.created_at)}${post.updated_at && post.updated_at !== post.created_at ? ' · 编辑于 ' + fmtDate(post.updated_at) : ''}</div>
       <div class="content">${paras}${imgs}</div>`
+    renderComments(id)
+    bindCommentForm(id)
   } catch (e) {
     box.innerHTML = '<div class="empty">加载失败，请刷新重试。</div>'
   }
+}
+
+async function renderComments(postId) {
+  const box = $('#comments')
+  try {
+    const res = await fetch(`/api/posts/${postId}/comments`)
+    const { comments } = await res.json()
+    box.innerHTML = !comments || !comments.length
+      ? '<div class="empty">还没有评论，来说两句吧。</div>'
+      : comments
+          .map(c => `<div class="comment"><div class="comment-head"><b>${escapeHtml(c.name)}</b><span class="date">${fmtDate(c.created_at)}</span></div><p>${escapeHtml(c.content)}</p></div>`)
+          .join('')
+  } catch (e) {
+    box.innerHTML = '<div class="empty">评论加载失败。</div>'
+  }
+}
+
+function bindCommentForm(postId) {
+  const form = $('#comment-form')
+  if (!form || form.dataset.bound) return
+  form.dataset.bound = '1'
+  form.addEventListener('submit', async e => {
+    e.preventDefault()
+    const status = $('#c-status')
+    const name = $('#c-name').value.trim()
+    const content = $('#c-content').value.trim()
+    if (!name || !content) return
+    status.textContent = '提交中…'
+    try {
+      const res = await fetch(`/api/posts/${postId}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, content })
+      })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok) {
+        $('#c-content').value = ''
+        status.textContent = ''
+        renderComments(postId)
+      } else {
+        status.textContent = data.error || '提交失败'
+      }
+    } catch (err) {
+      status.textContent = '提交失败，请重试'
+    }
+  })
 }
 
 if ($('#post')) renderPost()

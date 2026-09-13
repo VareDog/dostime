@@ -281,3 +281,24 @@ button.danger:hover { border-color: #b4443c; background: #fdf5f4; }
   .post-card .cover { width: 100%; height: 150px; }
   .post-detail { padding: 26px 20px; }
 }
+
+.comments { margin-top: 34px; padding: 0 4px; }
+.comments h3 { margin: 0 0 14px; font-size: 18px; }
+.comment-list { display: flex; flex-direction: column; gap: 14px; margin-bottom: 22px; }
+.comment { background: var(--card-bg, #fff); border: 1px solid rgba(0,0,0,0.07); border-radius: 10px; padding: 12px 16px; }
+.comment-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+.comment-head b { font-size: 14.5px; }
+.comment-head .date { color: var(--muted); font-size: 12.5px; }
+.comment p { margin: 0; font-size: 14.5px; color: #444; line-height: 1.7; white-space: pre-wrap; }
+.comment-form { display: flex; flex-direction: column; gap: 10px; }
+.comment-form input, .comment-form textarea {
+  border: 1px solid rgba(0,0,0,0.14); border-radius: 8px; padding: 10px 12px;
+  font-size: 14.5px; font-family: inherit; resize: vertical; background: #fff;
+}
+.comment-form input:focus, .comment-form textarea:focus { outline: 2px solid var(--accent, #4a7dff); border-color: transparent; }
+.comment-form button {
+  align-self: flex-start; border: 0; border-radius: 8px; padding: 9px 22px;
+  background: var(--accent, #4a7dff); color: #fff; font-size: 14.5px; cursor: pointer;
+}
+.comment-form button:hover { filter: brightness(1.06); }
+.c-status { color: #c00; font-size: 13px; }
