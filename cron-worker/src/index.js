@@ -214,6 +214,30 @@ async function processTasks(env) {
   return `notified=${sent}`
 }
 
+async function sendCommentNotify(env, body) {
+  const post = body.post || {}
+  const c = body.comment || {}
+  const name = String(c.name || '').slice(0, 30)
+  const cContent = String(c.content || '').slice(0, 1000)
+  const createdAt = String(c.createdAt || bjTodayStr())
+  const postTitle = String(post.title || '').slice(0, 120)
+  const postContent = String(post.content || '').slice(0, 3000)
+  const subject = `【DosDay】新评论：${name} · ${postTitle || '无题日记'}`
+  const html = wrapHtml(`
+    <h2 style="margin-bottom:4px">你的日记收到了新评论</h2>
+    <p style="color:#999;font-size:13px;margin-top:0">${bjTodayStr()}</p>
+    <div style="background:#f6f8fa;border-radius:8px;padding:12px 16px;margin:14px 0">
+      <div style="font-weight:600;font-size:14px;color:#555">日记：${escapeHtml(postTitle || '无题')}</div>
+      <div style="font-size:14px;color:#666;margin-top:6px;line-height:1.8">${escapeHtml(postContent).replace(/\n/g, '<br/>')}</div>
+    </div>
+    <div style="background:#fff8e6;border-radius:8px;padding:12px 16px;margin:14px 0">
+      <div style="font-size:14px"><b>${escapeHtml(name)}</b> <span style="color:#999;font-size:12px">${escapeHtml(createdAt)}</span></div>
+      <div style="font-size:15px;line-height:1.8;margin-top:6px">${escapeHtml(cContent).replace(/\n/g, '<br/>')}</div>
+    </div>`)
+  const via = await sendWithFallback(env, subject, html)
+  return { ok: Boolean(via), via: via || 'none' }
+}
+
 async function runAll(env) {
   const emails = await processScheduledEmails(env)
   const tasks = await processTasks(env)
@@ -260,7 +284,7 @@ export default {
         return new Response('unauthorized', { status: 401 })
       }
       const body = await request.json().catch(() => ({}))
-      const result = await sendDiaryNotify(env, body)
+      const result = body.type === 'comment' ? await sendCommentNotify(env, body) : await sendDiaryNotify(env, body)
       return new Response(JSON.stringify(result), { headers: { 'Content-Type': 'application/json' } })
     }
     if (url.pathname === '/test' && request.method === 'GET') {

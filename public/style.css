@@ -302,3 +302,10 @@ button.danger:hover { border-color: #b4443c; background: #fdf5f4; }
 }
 .comment-form button:hover { filter: brightness(1.06); }
 .c-status { color: #c00; font-size: 13px; }
+
+.pin-row { display: flex; align-items: center; gap: 8px; font-size: 14.5px; color: #555; cursor: pointer; }
+.pin-row input { width: 16px; height: 16px; cursor: pointer; }
+.pin-tag {
+  display: inline-block; background: #e5533d; color: #fff; font-size: 11.5px;
+  padding: 1px 7px; border-radius: 4px; margin-right: 7px; vertical-align: 2px;
+}

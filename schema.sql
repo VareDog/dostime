@@ -32,3 +32,6 @@ CREATE TABLE IF NOT EXISTS comments (
 );
 
 CREATE INDEX IF NOT EXISTS comments_post_idx ON comments (post_id, id);
+
+-- 2026-09-13: 置顶功能
+ALTER TABLE posts ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0;

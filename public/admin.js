@@ -8,6 +8,7 @@ function resetEditor() {
   images = []
   $('#title').value = ''
   $('#content').value = ''
+  $('#pinned').checked = false
   $('#thumbs').innerHTML = ''
   $('#publish-btn').textContent = '发 表'
 }
@@ -96,7 +97,7 @@ async function publish() {
     const res = await fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, content, images })
+      body: JSON.stringify({ title, content, images, pinned: $('#pinned').checked ? 1 : 0 })
     })
     const data = await res.json()
     if (res.ok) {
@@ -130,7 +131,7 @@ async function loadManage() {
         const t = p.title || (p.summary || '').slice(0, 24) || '无题'
         return `<div class="manage-item">
           <div>
-            <div>${t.replace(/</g, '&lt;')}</div>
+            <div>${p.pinned ? '<span class="pin-tag">置顶</span>' : ''}${t.replace(/</g, '&lt;')}</div>
             <div class="d">${(p.created_at || '').slice(0, 16)}</div>
           </div>
           <div class="acts">
@@ -155,6 +156,7 @@ async function loadManage() {
         images = post.images || []
         $('#title').value = post.title
         $('#content').value = post.content
+        $('#pinned').checked = !!post.pinned
         renderThumbs()
         $('#publish-btn').textContent = '保存修改'
         window.scrollTo({ top: 0, behavior: 'smooth' })

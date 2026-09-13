@@ -23,7 +23,7 @@ async function renderList() {
         const t = p.title || (p.summary || '').slice(0, 24) || '无题'
         return `<div class="post-card">
           <div class="meta">
-            <h2><a href="/post.html?id=${p.id}">${escapeHtml(t)}</a></h2>
+            <h2><a href="/post.html?id=${p.id}">${p.pinned ? '<span class="pin-tag">置顶</span>' : ''}${escapeHtml(t)}</a></h2>
             <div class="date">${fmtDate(p.created_at)}</div>
             <p class="summary">${escapeHtml(p.summary || '')}</p>
           </div>
