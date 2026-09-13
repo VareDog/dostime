@@ -13,10 +13,10 @@ export async function onRequestGet({ params, env }) {
 export async function onRequestPut({ request, params, env }) {
   if (!(await requireAuth(request, env))) return json({ error: '未登录' }, 401)
   const body = await request.json().catch(() => ({}))
-  const title = (body.title || '').trim()
+  const title = (body.title || '').trim().slice(0, 100)
   const content = (body.content || '').trim()
   const images = Array.isArray(body.images) ? body.images.slice(0, 20) : []
-  if (!title || !content) return json({ error: '标题和内容不能为空' }, 400)
+  if (!content) return json({ error: '内容不能为空' }, 400)
   const r = await env.DB
     .prepare("UPDATE posts SET title = ?, content = ?, images = ?, updated_at = datetime('now', 'localtime') WHERE id = ?")
     .bind(title, content, JSON.stringify(images), params.id)

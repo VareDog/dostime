@@ -20,9 +20,10 @@ async function renderList() {
     box.innerHTML = posts
       .map(p => {
         const cover = p.images && p.images[0]
+        const t = p.title || (p.summary || '').slice(0, 24) || '无题'
         return `<div class="post-card">
           <div class="meta">
-            <h2><a href="/post.html?id=${p.id}">${escapeHtml(p.title)}</a></h2>
+            <h2><a href="/post.html?id=${p.id}">${escapeHtml(t)}</a></h2>
             <div class="date">${fmtDate(p.created_at)}</div>
             <p class="summary">${escapeHtml(p.summary || '')}</p>
           </div>
@@ -49,7 +50,7 @@ async function renderPost() {
       return
     }
     const { post } = await res.json()
-    document.title = `${post.title} · Dostime`
+    document.title = `${post.title || '无题'} · Dostime`
     const paras = escapeHtml(post.content)
       .split('\n')
       .filter(l => l.trim())
@@ -59,7 +60,7 @@ async function renderPost() {
       .map(u => `<img src="${escapeHtml(u)}" alt="" loading="lazy" />`)
       .join('')
     box.innerHTML = `
-      <h1>${escapeHtml(post.title)}</h1>
+      ${post.title ? `<h1>${escapeHtml(post.title)}</h1>` : ''}
       <div class="date">${fmtDate(post.created_at)}${post.updated_at && post.updated_at !== post.created_at ? ' · 编辑于 ' + fmtDate(post.updated_at) : ''}</div>
       <div class="content">${paras}${imgs}</div>`
   } catch (e) {

@@ -1,0 +1,11 @@
+name = "dostime-cron"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+[triggers]
+crons = ["*/5 * * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "dostime-db"
+database_id = "8ede6c54-b380-4f39-a920-5e284cb7b522"

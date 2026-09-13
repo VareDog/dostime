@@ -25,21 +25,83 @@
     </div>
 
     <div id="editor-box" class="hidden">
-      <h2>写新日记</h2>
-      <input type="text" id="title" placeholder="标题（必填）" maxlength="100" />
-      <textarea id="content" rows="12" placeholder="今天想写点什么…（必填）"></textarea>
-      <div class="upload-row">
-        <label class="upload-btn">+ 添加图片
-          <input type="file" id="file" accept="image/jpeg,image/png,image/gif,image/webp,image/avif" multiple hidden />
-        </label>
-        <span id="upload-status"></span>
+      <div class="tabs">
+        <button class="tab active" data-tab="diary">写日记</button>
+        <button class="tab" data-tab="schedule">定时邮件</button>
+        <button class="tab" data-tab="tasks">任务提醒</button>
       </div>
-      <div id="thumbs" class="thumbs"></div>
-      <button id="publish-btn" class="primary">发 表</button>
-      <p id="pub-msg" class="err"></p>
 
-      <h3>已发表的日记</h3>
-      <div id="manage-list"><div class="loading">加载中…</div></div>
+      <section id="panel-diary" class="panel">
+        <h2 id="editor-title-text">写新日记</h2>
+        <input type="text" id="title" placeholder="标题（可不填）" maxlength="100" />
+        <textarea id="content" rows="12" placeholder="今天想写点什么…（必填）"></textarea>
+        <div class="upload-row">
+          <label class="upload-btn">+ 添加图片
+            <input type="file" id="file" accept="image/jpeg,image/png,image/gif,image/webp,image/avif" multiple hidden />
+          </label>
+          <span id="upload-status"></span>
+        </div>
+        <div id="thumbs" class="thumbs"></div>
+        <button id="publish-btn" class="primary">发 表</button>
+        <p id="pub-msg" class="err"></p>
+
+        <h3>已发表的日记</h3>
+        <div id="manage-list"><div class="loading">加载中…</div></div>
+      </section>
+
+      <section id="panel-schedule" class="panel hidden">
+        <h2>新建定时邮件</h2>
+        <input type="text" id="sc-title" placeholder="邮件标题（可不填）" maxlength="100" />
+        <textarea id="sc-content" rows="5" placeholder="邮件内容（必填）"></textarea>
+        <div class="form-row">
+          <label>重复周期</label>
+          <select id="sc-frequency">
+            <option value="daily">每天</option>
+            <option value="weekly">每周</option>
+            <option value="monthly">每月</option>
+            <option value="yearly">每年</option>
+          </select>
+          <select id="sc-weekday" class="hidden">
+            <option value="1">周一</option><option value="2">周二</option><option value="3">周三</option>
+            <option value="4">周四</option><option value="5">周五</option><option value="6">周六</option>
+            <option value="7">周日</option>
+          </select>
+          <input type="number" id="sc-monthday" class="hidden" min="1" max="31" placeholder="几号" />
+          <select id="sc-month" class="hidden">
+            <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option>
+            <option value="4">4月</option><option value="5">5月</option><option value="6">6月</option>
+            <option value="7">7月</option><option value="8">8月</option><option value="9">9月</option>
+            <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+          </select>
+          <input type="time" id="sc-time" value="08:00" />
+        </div>
+        <button id="sc-create-btn" class="primary">创建定时邮件</button>
+        <p id="sc-msg" class="err"></p>
+        <h3>已创建的定时邮件</h3>
+        <div id="schedule-list"><div class="loading">加载中…</div></div>
+      </section>
+
+      <section id="panel-tasks" class="panel hidden">
+        <h2>新建任务</h2>
+        <input type="text" id="tk-title" placeholder="任务内容（必填）" maxlength="100" />
+        <textarea id="tk-note" rows="3" placeholder="备注（可不填）"></textarea>
+        <div class="form-row">
+          <label>截止日期</label>
+          <input type="date" id="tk-due" />
+          <label>重复周期</label>
+          <select id="tk-recurrence">
+            <option value="once">单次</option>
+            <option value="daily">每天</option>
+            <option value="weekly">每周</option>
+            <option value="monthly">每月</option>
+            <option value="yearly">每年</option>
+          </select>
+        </div>
+        <button id="tk-create-btn" class="primary">创建任务</button>
+        <p id="tk-msg" class="err"></p>
+        <h3>任务列表</h3>
+        <div id="tasks-list"><div class="loading">加载中…</div></div>
+      </section>
     </div>
   </main>
   <footer class="wrap site-footer">© 2026 Dostime · dostime.pages.dev</footer>
