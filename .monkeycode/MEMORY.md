@@ -72,3 +72,5 @@ This file records user instructions, preferences, and teachings for reference in
   - scheduled_emails 双周期：新增 frequency2/weekday2/monthday2/month2/send_time2/next_send_at2 列，周期2 选填、独立计时独立顺延；worker processScheduledEmails 两组分别判断发送；前端 scSyncFields 同步两组显隐、sc-time2 无周期2时 disabled
   - 全站时间已统一北京时间：D1 四表 created_at 默认值 datetime('now','+8 hours')；API INSERT 显式传 bjNowStr()；scheduled_emails 的 next_send_at(2) 保持 UTC ISO 供调度对比，前端展示用 toLocaleString Asia/Shanghai 转 BJ
   - 用户偏好：表单预览直接显示结果（如「下次任务时间：2026-10-12 08:00 / 20:00」），不要显示公式说明文字
+  - 访客密码已上线（2026-09-15）：functions/_middleware.js 拦截全部 /api/*（放行 login/logout/guest-*），guest cookie 180 天有效，admin session 直接放行；密码=GUEST_PASSWORD secret（dosday123），改密后必须等 Git 自动部署生效
+  - Pages 踩坑：新加 secret 后必须触发一次新的 production deployment 才注入 runtime；手动 wrangler deploy 的 deployment 可能被随后 Git 构建覆盖生产 alias，以 Git 构建为准；改代码必须 push（本地有改动未 push 时生产始终跑旧代码，排查时先 git status 对比生产 commit）
