@@ -10,6 +10,8 @@
 
 ### 2026-09-15
 
+- **改为按篇私密**：写日记时可勾选「私密日记」，列表里模糊遮挡显示（标题/摘要/封面打码 + 锁标），点开需要输入访问密码，解锁后 180 天免输；私密日记的评论同样受保护；不勾选的日记任何人直接可看；日记通知邮件内容保持不变。访问密码 = GUEST_PASSWORD（当前 dosday123），修改方式：`wrangler pages secret put GUEST_PASSWORD --project-name dosday` 后等 Git 自动部署生效
+
 - **新增整站访客密码**：日记和图片接口全部加锁，未输密码只能看到密码页；在密码页输入正确密码后 180 天内免输（家人朋友共用一个密码即可）。访客密码为 GUEST_PASSWORD（当前 dosday123），修改方式：`wrangler pages secret put GUEST_PASSWORD --project-name dosday` 后等 Git 自动部署生效；后台「写日记」登录不受影响
 
 ### 2026-09-14
