@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS posts (
   content TEXT NOT NULL,
   images TEXT NOT NULL DEFAULT '[]',
   pinned INTEGER NOT NULL DEFAULT 0,
+  private INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT (datetime('now', '+8 hours')),
   updated_at TEXT
 );

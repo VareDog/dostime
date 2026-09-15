@@ -10,7 +10,7 @@ function autoTitle(title, content) {
 
 export async function onRequestGet({ env }) {
   const { results } = await env.DB
-    .prepare('SELECT id, title, substr(content, 1, 160) AS summary, images, pinned, created_at FROM posts ORDER BY pinned DESC, id DESC')
+    .prepare('SELECT id, title, substr(content, 1, 160) AS summary, images, pinned, private, created_at FROM posts ORDER BY pinned DESC, id DESC')
     .all()
   const posts = (results || []).map(p => ({ ...p, images: JSON.parse(p.images || '[]') }))
   return json({ posts })
@@ -23,11 +23,12 @@ export async function onRequestPost({ request, env }) {
   const content = (body.content || '').trim()
   const images = Array.isArray(body.images) ? body.images.slice(0, 20) : []
   const pinned = body.pinned ? 1 : 0
+  const priv = body.private ? 1 : 0
   if (!content) return json({ error: '内容不能为空' }, 400)
   const createdAt = bjNowStr()
   const r = await env.DB
-    .prepare('INSERT INTO posts (title, content, images, pinned, created_at) VALUES (?, ?, ?, ?, ?)')
-    .bind(title, content, JSON.stringify(images), pinned, createdAt)
+    .prepare('INSERT INTO posts (title, content, images, pinned, private, created_at) VALUES (?, ?, ?, ?, ?, ?)')
+    .bind(title, content, JSON.stringify(images), pinned, priv, createdAt)
     .run()
   let email = { sent: false, reason: '未知' }
   try {

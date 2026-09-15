@@ -313,3 +313,19 @@ button.danger:hover { border-color: #b4443c; background: #fdf5f4; }
 .cf-row { display: flex; gap: 10px; }
 .cf-row input { flex: 1; }
 .c-phone { color: var(--muted); font-size: 12.5px; margin-right: 8px; }
+
+.post-card.is-private { position: relative; }
+.post-card.is-private .meta h2,
+.post-card.is-private .meta .summary { filter: blur(5px); user-select: none; pointer-events: none; }
+.post-card.is-private .meta h2 a { pointer-events: auto; }
+.post-card.is-private .cover { filter: blur(10px); }
+.post-card .private-mask {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  background: rgba(245, 241, 234, 0.35); border-radius: 12px; z-index: 2; text-decoration: none;
+}
+.post-card .private-mask span {
+  background: #fff; border: 1px solid #e8e2d8; color: #8a7f6f; font-size: 13.5px;
+  padding: 7px 14px; border-radius: 999px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); white-space: nowrap;
+}
+
+.pri-tag { background: #6b5b95; color: #fff; font-size: 11px; padding: 2px 7px; border-radius: 4px; margin-right: 6px; vertical-align: 2px; }

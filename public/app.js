@@ -21,13 +21,14 @@ async function renderList() {
       .map(p => {
         const cover = p.images && p.images[0]
         const t = p.title || (p.summary || '').slice(0, 24) || '无题'
-        return `<div class="post-card">
+        return `<div class="post-card${p.private ? ' is-private' : ''}">
           <div class="meta">
             <h2><a href="/post.html?id=${p.id}">${p.pinned ? '<span class="pin-tag">置顶</span>' : ''}${escapeHtml(t)}</a></h2>
             <div class="date">${fmtDate(p.created_at)}</div>
             <p class="summary">${escapeHtml(p.summary || '')}</p>
           </div>
           ${cover ? `<img class="cover" src="${escapeHtml(cover)}" alt="" loading="lazy" />` : ''}
+          ${p.private ? `<a class="private-mask" href="/post.html?id=${p.id}"><span>🔒 私密日记 · 点开需访问密码</span></a>` : ''}
         </div>`
       })
       .join('')
@@ -45,6 +46,13 @@ async function renderPost() {
   }
   try {
     const res = await fetch(`/api/posts/${id}`)
+    if (res.status === 401) {
+      const data = await res.json().catch(() => ({}))
+      if (data.private) {
+        showPostGate()
+        return
+      }
+    }
     if (!res.ok) {
       box.innerHTML = '<div class="empty">日记不存在或已被删除。</div>'
       return
@@ -117,28 +125,22 @@ function bindCommentForm(postId) {
   })
 }
 
-async function guestGate() {
-  try {
-    const res = await fetch('/api/guest-check')
-    if (res.ok) return true
-  } catch (e) {}
-  showGate()
-  return false
-}
-
-function showGate() {
+function showPostGate() {
   if ($('#guest-gate')) return
+  const box = $('#post')
+  if (box) box.innerHTML = ''
   const wrap = document.createElement('div')
   wrap.id = 'guest-gate'
   wrap.style.cssText = 'position:fixed;inset:0;background:#f5f1ea;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px'
   wrap.innerHTML = `
     <div style="background:#fff;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.12);padding:34px 30px;width:100%;max-width:330px;text-align:center">
       <div style="font-size:34px;margin-bottom:6px">🔒</div>
-      <h2 style="margin:0 0 6px;font-size:19px">DosDay</h2>
-      <p style="color:#888;font-size:13px;margin:0 0 16px">这是我的私人日记本，请输入访问密码</p>
+      <h2 style="margin:0 0 6px;font-size:19px">私密日记</h2>
+      <p style="color:#888;font-size:13px;margin:0 0 16px">这篇日记是私密的，请输入访问密码</p>
       <input type="password" id="gate-pwd" placeholder="访问密码" style="width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid #ddd;border-radius:8px;font-size:15px;text-align:center" />
-      <button id="gate-btn" style="width:100%;margin-top:12px;padding:11px 0;border:0;border-radius:8px;background:#4a7c59;color:#fff;font-size:15px;cursor:pointer">进 入</button>
+      <button id="gate-btn" style="width:100%;margin-top:12px;padding:11px 0;border:0;border-radius:8px;background:#4a7c59;color:#fff;font-size:15px;cursor:pointer">解 锁</button>
       <p id="gate-msg" style="color:#c0392b;font-size:13px;min-height:18px;margin:10px 0 0"></p>
+      <p style="margin:12px 0 0"><a href="/" style="color:#999;font-size:13px">返回日记列表</a></p>
     </div>`
   document.body.appendChild(wrap)
   const submit = async () => {
@@ -158,11 +160,11 @@ function showGate() {
       } else {
         const data = await res.json().catch(() => ({}))
         msg.textContent = data.error || '密码不正确'
-        $('#gate-btn').textContent = '进 入'
+        $('#gate-btn').textContent = '解 锁'
       }
     } catch (e) {
       msg.textContent = '网络异常，请重试'
-      $('#gate-btn').textContent = '进 入'
+      $('#gate-btn').textContent = '解 锁'
     }
   }
   $('#gate-btn').addEventListener('click', submit)
@@ -171,7 +173,7 @@ function showGate() {
 }
 
 if ($('#post')) {
-  guestGate().then(ok => ok && renderPost())
+  renderPost()
 } else {
-  guestGate().then(ok => ok && renderList())
+  renderList()
 }

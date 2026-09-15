@@ -1,4 +1,4 @@
-import { json } from '../../../_lib/auth.js'
+import { json, requireAuth, requireGuest } from '../../../_lib/auth.js'
 import { bjNowStr } from '../../../_lib/schedule.js'
 
 const NOTIFY_URL = 'https://dostime-cron.doswowo.workers.dev/notify'
@@ -7,9 +7,18 @@ function badRequest(msg) {
   return json({ error: msg }, 400)
 }
 
-export async function onRequestGet({ params, env }) {
+async function canViewPrivate(request, env) {
+  return (await requireGuest(request, env)) || (await requireAuth(request, env))
+}
+
+export async function onRequestGet({ request, params, env }) {
   const postId = Number(params.id)
   if (!Number.isInteger(postId) || postId <= 0) return badRequest('参数错误')
+  const post = await env.DB.prepare('SELECT private FROM posts WHERE id = ?').bind(postId).first()
+  if (!post) return json({ error: '日记不存在' }, 404)
+  if (post.private && !(await canViewPrivate(request, env))) {
+    return json({ error: '私密日记，请输入访问密码', private: true }, 401)
+  }
   const { results } = await env.DB
     .prepare('SELECT id, name, phone, content, created_at FROM comments WHERE post_id = ? ORDER BY id ASC')
     .bind(postId)
@@ -28,8 +37,11 @@ export async function onRequestPost({ request, params, env, ctx }) {
   if (!phone) return badRequest('请填写电话')
   if (!/^[0-9+\-\s()]{5,20}$/.test(phone)) return badRequest('电话格式不正确')
   if (!content) return badRequest('请填写评论内容')
-  const post = await env.DB.prepare('SELECT id, title, content FROM posts WHERE id = ?').bind(postId).first()
+  const post = await env.DB.prepare('SELECT id, title, content, private FROM posts WHERE id = ?').bind(postId).first()
   if (!post) return json({ error: '日记不存在' }, 404)
+  if (post.private && !(await canViewPrivate(request, env))) {
+    return json({ error: '私密日记，请输入访问密码', private: true }, 401)
+  }
   const r = await env.DB
     .prepare('INSERT INTO comments (post_id, name, phone, content, created_at) VALUES (?, ?, ?, ?, ?)')
     .bind(postId, name, phone, content, bjNowStr())

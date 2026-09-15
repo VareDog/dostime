@@ -1,4 +1,4 @@
-import { requireAuth, json } from '../../_lib/auth.js'
+import { requireAuth, requireGuest, json } from '../../_lib/auth.js'
 import { sendNotify } from '../../_lib/notify.js'
 import { bjNowStr } from '../../_lib/schedule.js'
 
@@ -8,12 +8,19 @@ function autoTitle(title, content) {
   return Array.from(content.trim().replace(/\s+/g, ' ')).slice(0, 12).join('') || '无题'
 }
 
-export async function onRequestGet({ params, env }) {
+async function canViewPrivate(request, env) {
+  return (await requireGuest(request, env)) || (await requireAuth(request, env))
+}
+
+export async function onRequestGet({ request, params, env }) {
   const post = await env.DB
-    .prepare('SELECT id, title, content, images, pinned, created_at, updated_at FROM posts WHERE id = ?')
+    .prepare('SELECT id, title, content, images, pinned, private, created_at, updated_at FROM posts WHERE id = ?')
     .bind(params.id)
     .first()
   if (!post) return json({ error: '未找到' }, 404)
+  if (post.private && !(await canViewPrivate(request, env))) {
+    return json({ error: '私密日记，请输入访问密码', private: true }, 401)
+  }
   post.images = JSON.parse(post.images || '[]')
   return json({ post })
 }
@@ -25,11 +32,12 @@ export async function onRequestPut({ request, params, env }) {
   const content = (body.content || '').trim()
   const images = Array.isArray(body.images) ? body.images.slice(0, 20) : []
   const pinned = body.pinned ? 1 : 0
+  const priv = body.private ? 1 : 0
   if (!content) return json({ error: '内容不能为空' }, 400)
   const updatedAt = bjNowStr()
   const r = await env.DB
-    .prepare('UPDATE posts SET title = ?, content = ?, images = ?, pinned = ?, updated_at = ? WHERE id = ?')
-    .bind(title, content, JSON.stringify(images), pinned, updatedAt, params.id)
+    .prepare('UPDATE posts SET title = ?, content = ?, images = ?, pinned = ?, private = ?, updated_at = ? WHERE id = ?')
+    .bind(title, content, JSON.stringify(images), pinned, priv, updatedAt, params.id)
     .run()
   if (!r.meta.changes) return json({ error: '未找到' }, 404)
   let email = { sent: false, reason: '未知' }
