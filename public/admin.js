@@ -9,7 +9,7 @@ function resetEditor() {
   $('#title').value = ''
   $('#content').value = ''
   $('#pinned').checked = false
-  $('#private').checked = false
+  $('#private').checked = true
   $('#thumbs').innerHTML = ''
   $('#publish-btn').textContent = '发 表'
 }
