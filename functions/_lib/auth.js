@@ -28,6 +28,29 @@ export async function requireAuth(request, env) {
   return sig === expect
 }
 
+export async function makeGuestToken(env) {
+  const exp = String(Date.now() + 180 * 86400 * 1000)
+  const sig = await hmac(env.GUEST_PASSWORD, exp)
+  return `${exp}.${sig}`
+}
+
+export function getGuestSession(request) {
+  const cookie = request.headers.get('Cookie') || ''
+  const m = cookie.match(/(?:^|;\s*)guest=([^;]+)/)
+  return m ? m[1] : null
+}
+
+export async function requireGuest(request, env) {
+  if (!env.GUEST_PASSWORD) return true
+  const token = getGuestSession(request)
+  if (!token) return false
+  const [exp, sig] = token.split('.')
+  if (!exp || !sig) return false
+  if (Number(exp) < Date.now()) return false
+  const expect = await hmac(env.GUEST_PASSWORD, exp)
+  return sig === expect
+}
+
 export function json(data, status = 200, headers = {}) {
   return new Response(JSON.stringify(data), {
     status,

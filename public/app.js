@@ -117,5 +117,61 @@ function bindCommentForm(postId) {
   })
 }
 
-if ($('#post')) renderPost()
-else renderList()
+async function guestGate() {
+  try {
+    const res = await fetch('/api/guest-check')
+    if (res.ok) return true
+  } catch (e) {}
+  showGate()
+  return false
+}
+
+function showGate() {
+  if ($('#guest-gate')) return
+  const wrap = document.createElement('div')
+  wrap.id = 'guest-gate'
+  wrap.style.cssText = 'position:fixed;inset:0;background:#f5f1ea;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px'
+  wrap.innerHTML = `
+    <div style="background:#fff;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.12);padding:34px 30px;width:100%;max-width:330px;text-align:center">
+      <div style="font-size:34px;margin-bottom:6px">🔒</div>
+      <h2 style="margin:0 0 6px;font-size:19px">DosDay</h2>
+      <p style="color:#888;font-size:13px;margin:0 0 16px">这是我的私人日记本，请输入访问密码</p>
+      <input type="password" id="gate-pwd" placeholder="访问密码" style="width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid #ddd;border-radius:8px;font-size:15px;text-align:center" />
+      <button id="gate-btn" style="width:100%;margin-top:12px;padding:11px 0;border:0;border-radius:8px;background:#4a7c59;color:#fff;font-size:15px;cursor:pointer">进 入</button>
+      <p id="gate-msg" style="color:#c0392b;font-size:13px;min-height:18px;margin:10px 0 0"></p>
+    </div>`
+  document.body.appendChild(wrap)
+  const submit = async () => {
+    const msg = $('#gate-msg')
+    const pwd = $('#gate-pwd').value
+    if (!pwd) return (msg.textContent = '请输入密码')
+    msg.textContent = ''
+    $('#gate-btn').textContent = '验证中…'
+    try {
+      const res = await fetch('/api/guest-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pwd })
+      })
+      if (res.ok) {
+        location.reload()
+      } else {
+        const data = await res.json().catch(() => ({}))
+        msg.textContent = data.error || '密码不正确'
+        $('#gate-btn').textContent = '进 入'
+      }
+    } catch (e) {
+      msg.textContent = '网络异常，请重试'
+      $('#gate-btn').textContent = '进 入'
+    }
+  }
+  $('#gate-btn').addEventListener('click', submit)
+  $('#gate-pwd').addEventListener('keydown', e => e.key === 'Enter' && submit())
+  $('#gate-pwd').focus()
+}
+
+if ($('#post')) {
+  guestGate().then(ok => ok && renderPost())
+} else {
+  guestGate().then(ok => ok && renderList())
+}
