@@ -74,3 +74,4 @@ This file records user instructions, preferences, and teachings for reference in
   - 用户偏好：表单预览直接显示结果（如「下次任务时间：2026-10-12 08:00 / 20:00」），不要显示公式说明文字
   - 访客密码已上线（2026-09-15）：functions/_middleware.js 拦截全部 /api/*（放行 login/logout/guest-*），guest cookie 180 天有效，admin session 直接放行；密码=GUEST_PASSWORD secret（dosday123），改密后必须等 Git 自动部署生效
   - Pages 踩坑：新加 secret 后必须触发一次新的 production deployment 才注入 runtime；手动 wrangler deploy 的 deployment 可能被随后 Git 构建覆盖生产 alias，以 Git 构建为准；改代码必须 push（本地有改动未 push 时生产始终跑旧代码，排查时先 git status 对比生产 commit）
+  - 隐私模型（2026-09-15 定稿，替代整站密码）：posts.private 勾选式按篇加密——列表照常返回私密日记内容但前端 CSS 模糊遮挡+锁标，详情/评论接口对 private=1 校验 guest/admin 会话否则 401 {private:true}，访客输 GUEST_PASSWORD 解锁 180 天；无 middleware 全站锁，公开日记完全开放；通知邮件不受私密标记影响
