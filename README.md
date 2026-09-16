@@ -72,7 +72,7 @@ curl -H "X-Cron-Key: 你的CRON_SECRET" https://dostime-cron.doswowo.workers.dev
 
 ## 密钥与配置（Cloudflare Dashboard 中管理）
 
-路径：dash.cloudflare.com → Workers & Pages → dostime → Settings → Variables and Secrets（环境选 **Production**）
+路径：dash.cloudflare.com → Workers & Pages → dosday → Settings → Variables and Secrets（环境选 **Production**）
 
 | 名称 | 作用 | 说明 |
 |------|------|------|
@@ -86,7 +86,7 @@ curl -H "X-Cron-Key: 你的CRON_SECRET" https://dostime-cron.doswowo.workers.dev
 ## 修改 / 重置后台密码（完整步骤）
 
 1. 登录 dash.cloudflare.com
-2. 左侧 **Workers & Pages** → 点开 **dostime**
+2. 左侧 **Workers & Pages** → 点开 **dosday**
 3. **Settings** → **Variables and Secrets**
 4. 确认环境为 **Production**
 5. `ADMIN_PASSWORD` 行 → **Edit** → 输入新密码 → **Save**（首尾不要带空格，建议纯字母数字）
@@ -94,6 +94,16 @@ curl -H "X-Cron-Key: 你的CRON_SECRET" https://dostime-cron.doswowo.workers.dev
 7. 约 1 分钟后状态变 Success，用新密码登录后台，旧密码自动失效
 
 忘记密码就是同一套流程：设一个新值 → 重试部署 → 新密码登录。密码不存在找回，只存在覆盖。
+
+## 修改 / 重置私密日记访问密码（完整步骤）
+
+与后台密码同一页面、同一流程，只认 **Production** 环境的 `GUEST_PASSWORD`：
+
+1. 登录 dash.cloudflare.com → **Workers & Pages** → **dosday**
+2. **Settings** → **Variables and Secrets**（环境 **Production**）
+3. `GUEST_PASSWORD` 行 → **Edit** → 输入新访问密码 → **Save**
+4. **Deployments** → 最新部署 **⋯** → **Retry deployment**
+5. 约 1 分钟生效。已解锁过的访客凭旧 Cookie 仍可直接看私密日记（180 天有效）；想立即让所有人重新输密码，就把新密码设好后同样重试部署（Cookie 签名包含密码，改密码后旧 Cookie 自动失效）
 
 ## 更换收件邮箱 / 更换邮件密钥
 
@@ -146,8 +156,8 @@ npm install -g wrangler
 # 设置 Cloudflare API Token（Dashboard → My Profile → API Tokens 创建，需 Pages/D1/R2 编辑权限）
 export CLOUDFLARE_API_TOKEN=你的Token
 
-# 修改密码（按提示粘贴新值）
-wrangler pages secret put ADMIN_PASSWORD --project-name dostime
+# 修改密码（按提示粘贴新值；后台密码换 ADMIN_PASSWORD，访问密码换 GUEST_PASSWORD）
+wrangler pages secret put ADMIN_PASSWORD --project-name dosday
 
 # 重新部署
 wrangler pages deploy
