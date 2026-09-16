@@ -320,10 +320,11 @@ button.danger:hover { border-color: #b4443c; background: #fdf5f4; }
 .post-card.is-private .meta h2 a { pointer-events: auto; }
 .post-card.is-private .cover { filter: blur(10px); }
 .post-card .private-mask {
-  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-  background: rgba(245, 241, 234, 0.35); border-radius: 12px; z-index: 2; text-decoration: none;
+  position: absolute; inset: 0; display: block;
+  background: rgba(245, 241, 234, 0.35); border-radius: 12px; z-index: 2; text-decoration: none; cursor: pointer;
 }
 .post-card .private-mask span {
+  position: absolute; right: 12px; bottom: 10px;
   background: #fff; border: 1px solid #e8e2d8; color: #8a7f6f; font-size: 13.5px;
   padding: 7px 14px; border-radius: 999px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); white-space: nowrap;
 }
